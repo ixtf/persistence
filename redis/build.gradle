@@ -1,0 +1,5 @@
+dependencies {
+    compile project(":core"),
+            "com.google.inject:guice",
+            "redis.clients:jedis:3.0.1"
+}

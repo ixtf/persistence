@@ -1,0 +1,4 @@
+rootProject.name = 'com.github.ixtf.persistence'
+include 'mongo'
+include 'core'
+include 'redis'

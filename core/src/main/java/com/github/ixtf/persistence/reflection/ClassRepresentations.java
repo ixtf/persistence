@@ -49,12 +49,7 @@ public final class ClassRepresentations {
 
     @SneakyThrows
     public static <T> ClassRepresentation<T> create(Class<T> entityClass) {
-        final String className = entityClass.getName();
-        if (J.contains(className, "CGLIB")) {
-            final String actualClassName = J.split(className, "$$")[0];
-            entityClass = (Class<T>) Class.forName(actualClassName);
-        }
-        return cache.get(entityClass);
+        return cache.get(J.actualClass(entityClass));
     }
 
     private static FieldRepresentation to(Field field) {

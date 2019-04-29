@@ -1,13 +1,13 @@
-package com.github.ixtf.persistence.mongo.api;
+package com.github.ixtf.persistence.mongo;
 
 import com.github.ixtf.japp.core.J;
 import com.github.ixtf.persistence.IEntity;
 import com.github.ixtf.persistence.api.AbstractUnitOfWork;
 import com.github.ixtf.persistence.api.EntityConverter;
-import com.github.ixtf.persistence.mongo.Jmongo;
 import com.github.ixtf.persistence.reflection.ClassRepresentation;
 import com.github.ixtf.persistence.reflection.ClassRepresentations;
 import com.github.ixtf.persistence.reflection.FieldRepresentation;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.UpdateOneModel;
@@ -22,9 +22,9 @@ import org.bson.types.ObjectId;
 import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
 import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import javax.persistence.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.github.ixtf.persistence.mongo.Jmongo.ID_COL;
 import static java.util.stream.Collectors.*;
@@ -34,6 +34,11 @@ import static java.util.stream.Collectors.*;
  */
 @Slf4j
 public class MongoUnitOfWork extends AbstractUnitOfWork {
+    private final Jmongo jmongo;
+
+    MongoUnitOfWork(Jmongo jmongo) {
+        this.jmongo = jmongo;
+    }
 
     @SneakyThrows
     @Override
@@ -46,16 +51,33 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
         return ReactiveStreams.fromCompletionStage(completionStage)
                 .flatMapIterable(Map::entrySet)
                 .flatMapRsPublisher(entry -> {
-                    final MongoCollection<Document> collection = Jmongo.collection(entry.getKey());
+                    final MongoCollection<Document> collection = jmongo.collection(entry.getKey());
                     return collection.bulkWrite(entry.getValue());
                 }).toList().run().thenApply(bulkWriteResults -> {
-                    log.debug("" + bulkWriteResults);
+                    if (log.isDebugEnabled()) {
+                        log(bulkWriteResults);
+                    }
+                    J.emptyIfNull(newList).stream().forEach(entity -> {
+                        final Collection<EntityCallback> callbacks = getCallback(entity, PostPersist.class);
+                        callbacks.forEach(callback -> callback.callback(entity));
+                    });
+                    J.emptyIfNull(dirtyList).stream().forEach(entity -> {
+                        final Collection<EntityCallback> callbacks = getCallback(entity, PostUpdate.class);
+                        callbacks.forEach(callback -> callback.callback(entity));
+                    });
+                    J.emptyIfNull(deleteList).stream().forEach(entity -> {
+                        final Collection<EntityCallback> callbacks = getCallback(entity, PostRemove.class);
+                        callbacks.forEach(callback -> callback.callback(entity));
+                    });
                     // todo 更新的数量是否一致
                     return this;
                 }).toCompletableFuture().get();
     }
 
     private Pair<String, WriteModel<Document>> newListWriteModel(IEntity o) {
+        for (EntityCallback callback : getCallback(o, PrePersist.class)) {
+            callback.callback(o);
+        }
         if (J.isBlank(o.getId())) {
             o.setId(new ObjectId().toHexString());
         }
@@ -65,6 +87,9 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
     }
 
     private Pair<String, WriteModel<Document>> dirtyListWriteModel(IEntity o) {
+        for (EntityCallback callback : getCallback(o, PreUpdate.class)) {
+            callback.callback(o);
+        }
         final Document document = toDocument(o);
         document.remove(ID_COL);
         final Document $set = new Document("$set", document);
@@ -73,6 +98,9 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
     }
 
     private Pair<String, WriteModel<Document>> deleteListWriteModel(IEntity o) {
+        for (EntityCallback callback : getCallback(o, PreRemove.class)) {
+            callback.callback(o);
+        }
         final DeleteOneModel<Document> model = new DeleteOneModel<>(new Document(ID_COL, idValue(o)));
         return Pair.of(collectionName(o), model);
     }
@@ -95,7 +123,7 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
         if (!classRepresentation.hasId()) {
             throw new RuntimeException("Class[" + o.getClass() + "]，id不存在");
         }
-        final EntityConverter entityConverter = DocumentEntityConverter.get(o.getClass());
+        final EntityConverter entityConverter = DocumentEntityConverter.get(jmongo);
         return entityConverter.toDbData(new Document(), o);
     }
 
@@ -105,8 +133,30 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
         return this;
     }
 
+    @SneakyThrows
     @Override
     protected boolean existsByEntity(IEntity o) {
-        return Jmongo.existsByEntity(o);
+        return jmongo.existsByEntity(o).toCompletableFuture().get();
+    }
+
+    private void log(List<BulkWriteResult> bulkWriteResults) {
+        final AtomicInteger newCount = new AtomicInteger();
+        final AtomicInteger dirtyCount = new AtomicInteger();
+        final AtomicInteger deleteCount = new AtomicInteger();
+        bulkWriteResults.forEach(bulkWriteResult -> {
+            final int insertedCount = bulkWriteResult.getInsertedCount();
+            newCount.addAndGet(insertedCount);
+            final int modifiedCount = bulkWriteResult.getModifiedCount();
+            dirtyCount.addAndGet(modifiedCount);
+            final int deletedCount = bulkWriteResult.getDeletedCount();
+            deleteCount.addAndGet(deletedCount);
+            final String join = String.join(
+                    ";",
+                    "newList=" + J.emptyIfNull(newList) + ",newCount=" + newCount.get(),
+                    "dirtyList=" + J.emptyIfNull(dirtyList) + ",dirtyCount=" + dirtyCount.get(),
+                    "deleteList=" + J.emptyIfNull(deleteList) + ",deleteCount=" + deleteCount.get()
+            );
+            log.info(join);
+        });
     }
 }

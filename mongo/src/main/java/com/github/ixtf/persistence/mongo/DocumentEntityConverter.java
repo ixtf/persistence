@@ -1,9 +1,8 @@
-package com.github.ixtf.persistence.mongo.api;
+package com.github.ixtf.persistence.mongo;
 
 import com.github.ixtf.persistence.api.AbstractEntityConverter;
 import com.github.ixtf.persistence.api.EntityConverter;
 import com.github.ixtf.persistence.api.ValueWriterDecorator;
-import com.github.ixtf.persistence.mongo.Jmongo;
 import com.github.ixtf.persistence.reflection.ClassRepresentation;
 import com.github.ixtf.persistence.reflection.ClassRepresentations;
 import com.github.ixtf.persistence.reflection.FieldRepresentation;
@@ -29,12 +28,14 @@ import static java.util.stream.Collectors.toList;
  */
 @Slf4j
 public class DocumentEntityConverter extends AbstractEntityConverter {
+    private final Jmongo jmongo;
 
-    private DocumentEntityConverter() {
+    private DocumentEntityConverter(Jmongo jmongo) {
+        this.jmongo = jmongo;
     }
 
-    public static EntityConverter get(Class clazz) {
-        return Holder.INSTANCE;
+    static EntityConverter get(Jmongo jmongo) {
+        return new DocumentEntityConverter(jmongo);
     }
 
     @Override
@@ -50,7 +51,7 @@ public class DocumentEntityConverter extends AbstractEntityConverter {
         if (colValue instanceof String || colValue instanceof ObjectId) {
             final LazyLoader lazyLoader = () -> {
                 log.debug("lazyLoaderSubEntity[" + entity.getClass().getSimpleName() + "," + fieldRepresentation.getFieldName() + "]");
-                return Jmongo.findById(subEntityClass, colValue).orElse(null);
+                return jmongo.findById(subEntityClass, colValue).toCompletableFuture().get().orElse(null);
             };
             final Enhancer enhancer = new Enhancer();
             enhancer.setSuperclass(subEntityClass);
@@ -72,7 +73,7 @@ public class DocumentEntityConverter extends AbstractEntityConverter {
         if (itemValue instanceof String || itemValue instanceof ObjectId) {
             final LazyLoader lazyLoader = () -> {
                 log.debug("lazyLoaderEntity_Collection[" + entity.getClass().getSimpleName() + "." + fieldRepresentation.getFieldName() + "]");
-                return Jmongo.listById(elementType, iterable).collect(collector).run().toCompletableFuture().get();
+                return jmongo.listById(elementType, iterable).collect(collector).run().toCompletableFuture().get();
             };
             final Enhancer enhancer = new Enhancer();
             final Class rawType = fieldRepresentation.getRawType();
@@ -131,7 +132,4 @@ public class DocumentEntityConverter extends AbstractEntityConverter {
         document.append(colName, colValue);
     }
 
-    private static class Holder {
-        private static final EntityConverter INSTANCE = new DocumentEntityConverter();
-    }
 }

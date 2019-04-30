@@ -14,7 +14,6 @@ import lombok.SneakyThrows;
 import javax.persistence.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
@@ -25,16 +24,16 @@ import static org.apache.commons.lang3.reflect.MethodUtils.getMethodsListWithAnn
  * @author jzb 2019-02-18
  */
 public abstract class AbstractUnitOfWork implements UnitOfWork {
-    private static final LoadingCache<Class<? extends IEntity>, Multimap<Class<? extends Annotation>, EntityCallback>> cache = CacheBuilder.newBuilder().build(new CacheLoader<>() {
+    private static final LoadingCache<Class<? extends IEntity>, Multimap<Class<? extends Annotation>, PersistenceCallback>> cache = CacheBuilder.newBuilder().build(new CacheLoader<>() {
         @Override
-        public Multimap<Class<? extends Annotation>, EntityCallback> load(Class<? extends IEntity> entityClass) throws Exception {
-            final Multimap<Class<? extends Annotation>, EntityCallback> multimap = ArrayListMultimap.create();
-            Stream<EntityCallback> stream = streamAnnotation().flatMap(it -> streamCallback(entityClass, it));
+        public Multimap<Class<? extends Annotation>, PersistenceCallback> load(Class<? extends IEntity> entityClass) throws Exception {
+            final Multimap<Class<? extends Annotation>, PersistenceCallback> multimap = ArrayListMultimap.create();
+            Stream<PersistenceCallback> stream = streamAnnotation().flatMap(it -> callbackStream(entityClass, it));
             final EntityListeners entityListeners = entityClass.getAnnotation(EntityListeners.class);
             if (entityListeners != null) {
                 for (Class listenerClass : entityListeners.value()) {
                     final Object listener = listenerClass.getDeclaredConstructor().newInstance();
-                    final Stream<EntityCallback> stream1 = streamAnnotation().flatMap(it -> streamCallback(entityClass, listener, it));
+                    final Stream<PersistenceCallback> stream1 = streamAnnotation().flatMap(it -> callbackStream(entityClass, listener, it));
                     stream = Stream.concat(stream, stream1);
                 }
             }
@@ -46,13 +45,13 @@ public abstract class AbstractUnitOfWork implements UnitOfWork {
             return Stream.of(PrePersist.class, PostPersist.class, PreUpdate.class, PostUpdate.class, PreRemove.class, PostRemove.class).distinct();
         }
 
-        private Stream<EntityCallback> streamCallback(Class<? extends IEntity> entityClass, Class<? extends Annotation> annotationClass) {
+        private Stream<PersistenceCallback> callbackStream(Class<? extends IEntity> entityClass, Class<? extends Annotation> annotationClass) {
             return getMethodsListWithAnnotation(entityClass, annotationClass, false, true).stream().map(method ->
                     new EntitySelfHandler(entityClass, annotationClass, method)
             );
         }
 
-        private Stream<EntityCallback> streamCallback(Class<? extends IEntity> entityClass, Object listener, Class<? extends Annotation> annotationClass) {
+        private Stream<PersistenceCallback> callbackStream(Class<? extends IEntity> entityClass, Object listener, Class<? extends Annotation> annotationClass) {
             return getMethodsListWithAnnotation(listener.getClass(), annotationClass, false, true).stream().map(method ->
                     new EntityListenerHandler(entityClass, annotationClass, listener, method)
             );
@@ -62,27 +61,21 @@ public abstract class AbstractUnitOfWork implements UnitOfWork {
     protected final List<IEntity> dirtyList = Collections.synchronizedList(Lists.newArrayList());
     protected final List<IEntity> cleanList = Collections.synchronizedList(Lists.newArrayList());
     protected final List<IEntity> deleteList = Collections.synchronizedList(Lists.newArrayList());
+    @Getter
+    protected boolean committed;
 
     @SneakyThrows
-    protected Collection<EntityCallback> getCallback(IEntity o, Class<? extends Annotation> annotationClass) {
-        return getCallback(J.actualClass(o.getClass()), annotationClass);
+    protected Stream<PersistenceCallback> callbackStream(IEntity o, Class<? extends Annotation> annotationClass) {
+        return callbackStream(J.actualClass(o.getClass()), annotationClass);
     }
 
     @SneakyThrows
-    protected Collection<EntityCallback> getCallback(Class<? extends IEntity> entityClass, Class<? extends Annotation> annotationClass) {
-        final Multimap<Class<? extends Annotation>, EntityCallback> multimap = cache.get(entityClass);
-        return multimap.get(annotationClass);
+    protected Stream<PersistenceCallback> callbackStream(Class<? extends IEntity> entityClass, Class<? extends Annotation> annotationClass) {
+        final Multimap<Class<? extends Annotation>, PersistenceCallback> multimap = cache.get(entityClass);
+        return multimap.get(annotationClass).stream();
     }
 
-    public interface EntityCallback {
-        Class<? extends IEntity> getEntityClass();
-
-        Class<? extends Annotation> getAnnotationClass();
-
-        void callback(IEntity o);
-    }
-
-    private static class EntitySelfHandler implements EntityCallback {
+    private static class EntitySelfHandler implements PersistenceCallback {
         @Getter
         private final Class<? extends IEntity> entityClass;
         @Getter
@@ -103,7 +96,7 @@ public abstract class AbstractUnitOfWork implements UnitOfWork {
         }
     }
 
-    private static class EntityListenerHandler implements EntityCallback {
+    private static class EntityListenerHandler implements PersistenceCallback {
         @Getter
         private final Class<? extends IEntity> entityClass;
         @Getter

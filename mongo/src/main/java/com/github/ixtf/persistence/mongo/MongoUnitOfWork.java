@@ -23,7 +23,10 @@ import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
 import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
 
 import javax.persistence.*;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.github.ixtf.persistence.mongo.Jmongo.ID_COL;
@@ -43,6 +46,9 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
     @SneakyThrows
     @Override
     synchronized public MongoUnitOfWork commit() {
+        if (committed) {
+            return this;
+        }
         PublisherBuilder<Pair<String, WriteModel<Document>>> builder = ReactiveStreams.empty();
         builder = ReactiveStreams.concat(builder, ReactiveStreams.fromIterable(newList).map(this::newListWriteModel));
         builder = ReactiveStreams.concat(builder, ReactiveStreams.fromIterable(dirtyList).map(this::dirtyListWriteModel));
@@ -54,30 +60,26 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
                     final MongoCollection<Document> collection = jmongo.collection(entry.getKey());
                     return collection.bulkWrite(entry.getValue());
                 }).toList().run().thenApply(bulkWriteResults -> {
+                    committed = true;
                     if (log.isDebugEnabled()) {
                         log(bulkWriteResults);
                     }
-                    J.emptyIfNull(newList).stream().forEach(entity -> {
-                        final Collection<EntityCallback> callbacks = getCallback(entity, PostPersist.class);
-                        callbacks.forEach(callback -> callback.callback(entity));
-                    });
-                    J.emptyIfNull(dirtyList).stream().forEach(entity -> {
-                        final Collection<EntityCallback> callbacks = getCallback(entity, PostUpdate.class);
-                        callbacks.forEach(callback -> callback.callback(entity));
-                    });
-                    J.emptyIfNull(deleteList).stream().forEach(entity -> {
-                        final Collection<EntityCallback> callbacks = getCallback(entity, PostRemove.class);
-                        callbacks.forEach(callback -> callback.callback(entity));
-                    });
+                    J.emptyIfNull(newList).stream().forEach(entity ->
+                            callbackStream(entity, PostPersist.class).forEach(it -> it.callback(entity))
+                    );
+                    J.emptyIfNull(dirtyList).stream().forEach(entity ->
+                            callbackStream(entity, PostUpdate.class).forEach(it -> it.callback(entity))
+                    );
+                    J.emptyIfNull(deleteList).stream().forEach(entity ->
+                            callbackStream(entity, PostRemove.class).forEach(it -> it.callback(entity))
+                    );
                     // todo 更新的数量是否一致
                     return this;
                 }).toCompletableFuture().get();
     }
 
     private Pair<String, WriteModel<Document>> newListWriteModel(IEntity o) {
-        for (EntityCallback callback : getCallback(o, PrePersist.class)) {
-            callback.callback(o);
-        }
+        callbackStream(o, PrePersist.class).forEach(it -> it.callback(o));
         if (J.isBlank(o.getId())) {
             o.setId(new ObjectId().toHexString());
         }
@@ -87,9 +89,7 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
     }
 
     private Pair<String, WriteModel<Document>> dirtyListWriteModel(IEntity o) {
-        for (EntityCallback callback : getCallback(o, PreUpdate.class)) {
-            callback.callback(o);
-        }
+        callbackStream(o, PreUpdate.class).forEach(it -> it.callback(o));
         final Document document = toDocument(o);
         document.remove(ID_COL);
         final Document $set = new Document("$set", document);
@@ -98,9 +98,7 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
     }
 
     private Pair<String, WriteModel<Document>> deleteListWriteModel(IEntity o) {
-        for (EntityCallback callback : getCallback(o, PreRemove.class)) {
-            callback.callback(o);
-        }
+        callbackStream(o, PreRemove.class).forEach(it -> it.callback(o));
         final DeleteOneModel<Document> model = new DeleteOneModel<>(new Document(ID_COL, idValue(o)));
         return Pair.of(collectionName(o), model);
     }

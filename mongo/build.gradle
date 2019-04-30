@@ -1,8 +1,8 @@
 dependencies {
     compile project(":core"),
             'org.mongodb:mongodb-driver-reactivestreams:1.11.0',
-            'io.smallrye.reactive:smallrye-reactive-streams-operators:1.0.3',
-            'io.smallrye.reactive:smallrye-reactive-streams-vertx-execution-model:1.0.3'
+            'io.smallrye.reactive:smallrye-reactive-streams-operators',
+            'io.smallrye.reactive:smallrye-reactive-streams-vertx-execution-model'
 
     testCompile 'com.github.ixtf.japp:poi'
     testCompile 'com.github.ixtf.japp:codec'

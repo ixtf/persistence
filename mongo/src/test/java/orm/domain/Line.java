@@ -2,6 +2,7 @@ package orm.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import orm.LineListener;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
@@ -16,6 +17,7 @@ import java.util.Date;
 @NoArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EntityListeners(LineListener.class)
 @Entity
 public class Line implements EntityLoggable {
     @ToString.Include
@@ -77,8 +79,8 @@ public class Line implements EntityLoggable {
 //        final LineMachineRepository lineMachineRepository = Jvertx.getProxy(LineMachineRepository.class);
 //        return lineMachineRepository.listBy(this);
 //    }
-    @PrePersist
-    @PreUpdate
+    @PostPersist
+    @PostUpdate
     private void test() {
         System.out.println("@PrePersist @PreUpdate Test");
     }

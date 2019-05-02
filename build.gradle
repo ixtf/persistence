@@ -9,7 +9,7 @@ allprojects {
     apply plugin: 'idea'
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
-    apply plugin: "io.spring.dependency-management"
+    apply plugin: 'io.spring.dependency-management'
 
     repositories {
         mavenLocal()
@@ -35,7 +35,7 @@ subprojects {
     }
 
     dependencies {
-        testCompile "junit:junit"
+        testCompile "org.junit.jupiter:junit-jupiter-engine"
     }
 
     jar.manifest {

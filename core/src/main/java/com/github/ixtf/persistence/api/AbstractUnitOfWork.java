@@ -16,8 +16,10 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
+import static org.apache.commons.lang3.reflect.MethodUtils.getMatchingMethod;
 import static org.apache.commons.lang3.reflect.MethodUtils.getMethodsListWithAnnotation;
 
 /**
@@ -33,7 +35,7 @@ public abstract class AbstractUnitOfWork implements UnitOfWork {
             if (entityListeners != null) {
                 for (Class listenerClass : entityListeners.value()) {
                     final Object listener = listenerClass.getDeclaredConstructor().newInstance();
-                    final Stream<PersistenceCallback> stream1 = streamAnnotation().flatMap(it -> callbackStream(entityClass, listener, it));
+                    final Stream<PersistenceCallback> stream1 = streamAnnotation().flatMap(it -> callbackStream(entityClass, it, listenerClass, listener));
                     stream = Stream.concat(stream, stream1);
                 }
             }
@@ -46,23 +48,27 @@ public abstract class AbstractUnitOfWork implements UnitOfWork {
         }
 
         private Stream<PersistenceCallback> callbackStream(Class<? extends IEntity> entityClass, Class<? extends Annotation> annotationClass) {
-            return getMethodsListWithAnnotation(entityClass, annotationClass, false, true).stream().map(method ->
-                    new EntitySelfHandler(entityClass, annotationClass, method)
-            );
+            return getMethodsListWithAnnotation(entityClass, annotationClass, false, true).stream()
+                    .filter(method -> {
+                        final Method matchingMethod = getMatchingMethod(entityClass, method.getName());
+                        return Objects.equals(method, matchingMethod);
+                    })
+                    .map(method -> new EntitySelfHandler(entityClass, annotationClass, method));
         }
 
-        private Stream<PersistenceCallback> callbackStream(Class<? extends IEntity> entityClass, Object listener, Class<? extends Annotation> annotationClass) {
-            return getMethodsListWithAnnotation(listener.getClass(), annotationClass, false, true).stream().map(method ->
-                    new EntityListenerHandler(entityClass, annotationClass, listener, method)
-            );
+        private Stream<PersistenceCallback> callbackStream(Class<? extends IEntity> entityClass, Class<? extends Annotation> annotationClass, Class<?> listenerClass, Object listener) {
+            return getMethodsListWithAnnotation(listenerClass, annotationClass, false, true).stream()
+                    .filter(method -> {
+                        final Method matchingMethod = getMatchingMethod(listenerClass, method.getName(), entityClass);
+                        return Objects.equals(method, matchingMethod);
+                    })
+                    .map(method -> new EntityListenerHandler(entityClass, annotationClass, listenerClass, listener, method));
         }
     });
     protected final List<IEntity> newList = Collections.synchronizedList(Lists.newArrayList());
     protected final List<IEntity> dirtyList = Collections.synchronizedList(Lists.newArrayList());
     protected final List<IEntity> cleanList = Collections.synchronizedList(Lists.newArrayList());
     protected final List<IEntity> deleteList = Collections.synchronizedList(Lists.newArrayList());
-    @Getter
-    protected boolean committed;
 
     @SneakyThrows
     protected Stream<PersistenceCallback> callbackStream(IEntity o, Class<? extends Annotation> annotationClass) {
@@ -96,27 +102,14 @@ public abstract class AbstractUnitOfWork implements UnitOfWork {
         }
     }
 
-    private static class EntityListenerHandler implements PersistenceCallback {
-        @Getter
-        private final Class<? extends IEntity> entityClass;
-        @Getter
-        private final Class<? extends Annotation> annotationClass;
-        private final Object listener;
-        private final Method method;
-
-        private EntityListenerHandler(Class<? extends IEntity> entityClass, Class<? extends Annotation> annotationClass, Object listener, Method method) {
-            this.entityClass = entityClass;
-            this.annotationClass = annotationClass;
-            this.listener = listener;
-            this.method = method;
-            method.setAccessible(true);
+    @Override
+    synchronized public UnitOfWork registerSave(IEntity o) {
+        if (exists(o)) {
+            registerDirty(o);
+        } else {
+            registerNew(o);
         }
-
-        @SneakyThrows
-        @Override
-        public void callback(IEntity o) {
-            method.invoke(listener, o);
-        }
+        return this;
     }
 
     @Override
@@ -154,16 +147,31 @@ public abstract class AbstractUnitOfWork implements UnitOfWork {
         return this;
     }
 
-    @Override
-    synchronized public UnitOfWork registerSave(IEntity o) {
-        if (existsByEntity(o)) {
-            registerDirty(o);
-        } else {
-            registerNew(o);
-        }
-        return this;
-    }
+    protected abstract boolean exists(IEntity o);
 
-    protected abstract boolean existsByEntity(IEntity o);
+    private static class EntityListenerHandler implements PersistenceCallback {
+        @Getter
+        private final Class<? extends IEntity> entityClass;
+        @Getter
+        private final Class<? extends Annotation> annotationClass;
+        private final Class<?> listenerClass;
+        private final Object listener;
+        private final Method method;
+
+        private EntityListenerHandler(Class<? extends IEntity> entityClass, Class<? extends Annotation> annotationClass, Class<?> listenerClass, Object listener, Method method) {
+            this.entityClass = entityClass;
+            this.annotationClass = annotationClass;
+            this.listenerClass = listenerClass;
+            this.listener = listener;
+            this.method = method;
+            method.setAccessible(true);
+        }
+
+        @SneakyThrows
+        @Override
+        public void callback(IEntity o) {
+            method.invoke(listener, o);
+        }
+    }
 
 }

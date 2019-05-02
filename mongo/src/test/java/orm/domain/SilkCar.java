@@ -10,6 +10,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -20,13 +21,34 @@ import java.util.Date;
 @ToString(onlyExplicitlyIncluded = true)
 @Entity
 public class SilkCar implements EntityLoggable, Serializable {
-    @EqualsAndHashCode.Include
     @ToString.Include
+    @EqualsAndHashCode.Include
     @Getter
     @Setter
     @Id
     @NotBlank
     private String id;
+    @Getter
+    @Setter
+    @Column
+    @NotNull
+    private SilkCarType type;
+    @Getter
+    @Setter
+    @Column
+    @NotNull
+    private Collection<SilkCarType> testTypes;
+    /**
+     * 丝车编号
+     */
+    @Getter
+    @Setter
+    @Column
+    @NotBlank
+    private String number;
+    /**
+     * 丝车编码，条形码
+     */
     @ToString.Include
     @Getter
     @Setter
@@ -43,6 +65,7 @@ public class SilkCar implements EntityLoggable, Serializable {
     @Column
     @Min(1)
     private int col;
+
     @JsonIgnore
     @Getter
     @Setter
@@ -70,8 +93,4 @@ public class SilkCar implements EntityLoggable, Serializable {
     @Setter
     @Column
     private boolean deleted;
-    @Getter
-    @Setter
-    @Column
-    private DoffingType doffingType;
 }

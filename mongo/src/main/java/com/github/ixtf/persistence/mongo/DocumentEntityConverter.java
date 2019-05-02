@@ -51,7 +51,7 @@ public class DocumentEntityConverter extends AbstractEntityConverter {
         if (colValue instanceof String || colValue instanceof ObjectId) {
             final LazyLoader lazyLoader = () -> {
                 log.debug("lazyLoaderSubEntity[" + entity.getClass().getSimpleName() + "," + fieldRepresentation.getFieldName() + "]");
-                return jmongo.findById(subEntityClass, colValue).toCompletableFuture().get().orElse(null);
+                return jmongo.find(subEntityClass, colValue).block();
             };
             final Enhancer enhancer = new Enhancer();
             enhancer.setSuperclass(subEntityClass);
@@ -73,7 +73,7 @@ public class DocumentEntityConverter extends AbstractEntityConverter {
         if (itemValue instanceof String || itemValue instanceof ObjectId) {
             final LazyLoader lazyLoader = () -> {
                 log.debug("lazyLoaderEntity_Collection[" + entity.getClass().getSimpleName() + "." + fieldRepresentation.getFieldName() + "]");
-                return jmongo.listById(elementType, iterable).collect(collector).run().toCompletableFuture().get();
+                return jmongo.list(elementType, iterable).collect(collector).block();
             };
             final Enhancer enhancer = new Enhancer();
             final Class rawType = fieldRepresentation.getRawType();
@@ -87,9 +87,9 @@ public class DocumentEntityConverter extends AbstractEntityConverter {
 
     @Override
     protected Object convertToDatabaseColumn_Collection(Object entity, GenericFieldRepresentation fieldRepresentation, Iterable iterable) {
-        final ClassRepresentation<?> elementClassRepresentation = ClassRepresentations.create(fieldRepresentation.getElementType());
         final Function function;
         if (fieldRepresentation.isEntityField()) {
+            final ClassRepresentation<?> elementClassRepresentation = ClassRepresentations.create(fieldRepresentation.getElementType());
             final String idFieldName = elementClassRepresentation.getId().map(FieldRepresentation::getFieldName).get();
             function = element -> {
                 try {
@@ -101,7 +101,7 @@ public class DocumentEntityConverter extends AbstractEntityConverter {
         } else if (fieldRepresentation.isEmbeddableField()) {
             function = element -> toDbData(new Document(), element);
         } else {
-            function = Function.identity();
+            function = ValueWriterDecorator.getInstance()::write;
         }
         return StreamSupport.stream(iterable.spliterator(), false).map(function).collect(toList());
     }

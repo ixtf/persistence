@@ -103,10 +103,10 @@ public class Jmongo {
     }
 
     public Document toDocument(Object o) {
-        final ClassRepresentation classRepresentation = ClassRepresentations.create(o);
-        if (!classRepresentation.hasId()) {
-            throw new RuntimeException("Class[" + o.getClass() + "]，id不存在");
-        }
+//        final ClassRepresentation classRepresentation = ClassRepresentations.create(o);
+//        if (!classRepresentation.hasId()) {
+//            throw new RuntimeException("Class[" + o.getClass() + "]，id不存在");
+//        }
         return entityConverter.toDbData(new Document(), o);
     }
 

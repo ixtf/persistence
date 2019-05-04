@@ -70,6 +70,8 @@ public abstract class AbstractUnitOfWork implements UnitOfWork {
     protected final List<IEntity> cleanList = Collections.synchronizedList(Lists.newArrayList());
     protected final List<IEntity> deleteList = Collections.synchronizedList(Lists.newArrayList());
 
+    protected abstract boolean exists(IEntity o);
+
     @Override
     synchronized public UnitOfWork registerSave(IEntity o) {
         if (exists(o)) {
@@ -171,7 +173,5 @@ public abstract class AbstractUnitOfWork implements UnitOfWork {
             method.invoke(listener, o);
         }
     }
-
-    protected abstract boolean exists(IEntity o);
 
 }

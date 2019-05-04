@@ -1,0 +1,8 @@
+dependencies {
+    compile project(':core'),
+            'org.apache.lucene:lucene-analyzers-smartcn',
+            'org.apache.lucene:lucene-expressions',
+            'org.apache.lucene:lucene-facet',
+            'org.apache.lucene:lucene-queries',
+            'org.apache.lucene:lucene-queryparser'
+}

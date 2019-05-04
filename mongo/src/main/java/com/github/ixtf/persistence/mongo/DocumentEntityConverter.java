@@ -15,6 +15,7 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import reactor.core.publisher.Flux;
 
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -73,7 +74,7 @@ public class DocumentEntityConverter extends AbstractEntityConverter {
         if (itemValue instanceof String || itemValue instanceof ObjectId) {
             final LazyLoader lazyLoader = () -> {
                 log.debug("lazyLoaderEntity_Collection[" + entity.getClass().getSimpleName() + "." + fieldRepresentation.getFieldName() + "]");
-                return jmongo.list(elementType, iterable).collect(collector).block();
+                return jmongo.find(elementType, Flux.fromIterable(iterable)).collect(collector).block();
             };
             final Enhancer enhancer = new Enhancer();
             final Class rawType = fieldRepresentation.getRawType();

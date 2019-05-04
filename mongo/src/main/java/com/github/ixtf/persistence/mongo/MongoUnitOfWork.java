@@ -18,11 +18,12 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.persistence.*;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,41 +37,54 @@ import static java.util.stream.Collectors.*;
 @Slf4j
 public class MongoUnitOfWork extends AbstractUnitOfWork {
     private final Jmongo jmongo;
-    private Iterable<BulkWriteResult> bulkWriteResults;
+    private Mono<List<BulkWriteResult>> commitResult;
 
     MongoUnitOfWork(Jmongo jmongo) {
         this.jmongo = jmongo;
     }
 
     @Override
+    protected boolean exists(IEntity o) {
+        return jmongo.exists(o).block();
+    }
+
+    @Override
     synchronized public MongoUnitOfWork commit() {
-        if (bulkWriteResults != null) {
-            return this;
-        }
-        bulkWriteResults = Flux.concat(newListWriteModel(), dirtyListWriteModel(), deleteListWriteModel())
-                .collect(groupingBy(Pair::getKey, LinkedHashMap::new, mapping(Pair::getRight, toList())))
-                .flatMapIterable(Map::entrySet)
-                .flatMap(entry -> {
-                    final MongoCollection<Document> collection = jmongo.collection(entry.getKey());
-                    return collection.bulkWrite(entry.getValue());
-                })
-                .collect(toList()).block();
-        if (log.isDebugEnabled()) {
-            log(bulkWriteResults);
-        }
-        J.emptyIfNull(newList).stream().forEach(entity ->
-                callbackStream(entity, PostPersist.class).forEach(it -> it.callback(entity))
-        );
-        J.emptyIfNull(dirtyList).stream().forEach(entity ->
-                callbackStream(entity, PostUpdate.class).forEach(it -> it.callback(entity))
-        );
-        J.emptyIfNull(deleteList).stream().forEach(entity ->
-                callbackStream(entity, PostRemove.class).forEach(it -> it.callback(entity))
-        );
+        rxCommit().block();
         return this;
     }
 
-    private Publisher<Pair<String, WriteModel<Document>>> newListWriteModel() {
+    synchronized public Mono<Void> rxCommit() {
+        if (commitResult == null) {
+            commitResult = Flux.concat(newListModel(), dirtyListModel(), deleteListModel())
+                    .collect(groupingBy(Pair::getKey, LinkedHashMap::new, mapping(Pair::getRight, toList())))
+                    .flatMapIterable(Map::entrySet)
+                    .flatMap(entry -> {
+                        final MongoCollection<Document> collection = jmongo.collection(entry.getKey());
+                        return collection.bulkWrite(entry.getValue());
+                    })
+                    .collectList()
+                    .doOnError(err -> log.error("", err))
+                    .doOnSuccess(bulkWriteResults -> {
+                        if (log.isDebugEnabled()) {
+                            log(bulkWriteResults);
+                        }
+                        newList.stream().forEach(entity ->
+                                callbackStream(entity, PostPersist.class).forEach(it -> it.callback(entity))
+                        );
+                        dirtyList.stream().forEach(entity ->
+                                callbackStream(entity, PostUpdate.class).forEach(it -> it.callback(entity))
+                        );
+                        deleteList.stream().forEach(entity ->
+                                callbackStream(entity, PostRemove.class).forEach(it -> it.callback(entity))
+                        );
+                    })
+                    .cache();
+        }
+        return commitResult.then();
+    }
+
+    private Flux<Pair<String, WriteModel<Document>>> newListModel() {
         return Flux.fromIterable(newList).map(o -> {
             callbackStream(o, PrePersist.class).forEach(it -> it.callback(o));
             if (J.isBlank(o.getId())) {
@@ -81,7 +95,7 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
         });
     }
 
-    private Publisher<Pair<String, WriteModel<Document>>> dirtyListWriteModel() {
+    private Flux<Pair<String, WriteModel<Document>>> dirtyListModel() {
         return Flux.fromIterable(dirtyList).map(o -> {
             callbackStream(o, PreUpdate.class).forEach(it -> it.callback(o));
             final Document document = jmongo.toDocument(o);
@@ -92,7 +106,7 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
         });
     }
 
-    private Publisher<Pair<String, WriteModel<Document>>> deleteListWriteModel() {
+    private Flux<Pair<String, WriteModel<Document>>> deleteListModel() {
         return Flux.fromIterable(deleteList).map(o -> {
             callbackStream(o, PreRemove.class).forEach(it -> it.callback(o));
             final DeleteOneModel<Document> model = new DeleteOneModel<>(new Document(ID_COL, idValue(o)));
@@ -119,12 +133,6 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
         return this;
     }
 
-    @SneakyThrows
-    @Override
-    protected boolean exists(IEntity o) {
-        return jmongo.exists(o).block();
-    }
-
     private void log(Iterable<BulkWriteResult> bulkWriteResults) {
         final AtomicInteger newCount = new AtomicInteger();
         final AtomicInteger dirtyCount = new AtomicInteger();
@@ -136,12 +144,12 @@ public class MongoUnitOfWork extends AbstractUnitOfWork {
             dirtyCount.addAndGet(modifiedCount);
             final int deletedCount = bulkWriteResult.getDeletedCount();
             deleteCount.addAndGet(deletedCount);
-            final String join = String.join(";",
-                    "newList=" + J.emptyIfNull(newList) + ",newCount=" + newCount.get(),
-                    "dirtyList=" + J.emptyIfNull(dirtyList) + ",dirtyCount=" + dirtyCount.get(),
-                    "deleteList=" + J.emptyIfNull(deleteList) + ",deleteCount=" + deleteCount.get()
-            );
-            log.info(join);
         });
+        final String join = String.join(";",
+                "newList=" + newList.size() + ",newCount=" + newCount.get(),
+                "dirtyList=" + dirtyList.size() + ",dirtyCount=" + dirtyCount.get(),
+                "deleteList=" + deleteList.size() + ",deleteCount=" + deleteCount.get()
+        );
+        log.info(join);
     }
 }

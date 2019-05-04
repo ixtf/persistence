@@ -1,8 +1,7 @@
 dependencies {
-    compile "com.github.ixtf.japp:core",
-            "javax:javaee-api",
-            "cglib:cglib",
-            "commons-beanutils:commons-beanutils"
-    
-    testCompile "org.reactivestreams:reactive-streams"
+    compile 'com.github.ixtf.japp:core',
+            'javax:javaee-api',
+            'cglib:cglib',
+            'commons-beanutils:commons-beanutils',
+            'io.projectreactor:reactor-core'
 }

@@ -88,41 +88,13 @@ public abstract class BaseLucene<T extends IEntity> {
         return doc;
     }
 
-    protected BooleanQuery.Builder add(BooleanQuery.Builder builder, String fieldName, boolean b) {
-        builder.add(IntPoint.newExactQuery(fieldName, b ? 1 : 0), BooleanClause.Occur.MUST);
-        return builder;
-    }
-
     protected Document add(Document doc, String fieldName, Enum e) {
         return add(doc, fieldName, e.name());
-    }
-
-    protected BooleanQuery.Builder add(BooleanQuery.Builder builder, String fieldName, Enum e) {
-        Optional.ofNullable(e).map(Enum::name).ifPresent(it -> add(builder, fieldName, it));
-        return builder;
     }
 
     protected Document add(Document doc, String fieldName, String s) {
         Optional.ofNullable(s).filter(J::nonBlank).ifPresent(it -> doc.add(new StringField(fieldName, s, Store.NO)));
         return doc;
-    }
-
-    protected BooleanQuery.Builder add(BooleanQuery.Builder builder, String fieldName, String s) {
-        Optional.ofNullable(s).filter(J::nonBlank)
-                .map(it -> new TermQuery(new Term(fieldName, s)))
-                .ifPresent(it -> builder.add(it, BooleanClause.Occur.MUST));
-        return builder;
-    }
-
-    protected BooleanQuery.Builder add(BooleanQuery.Builder builder, String fieldName, Collection<String> ss) {
-        if (J.nonEmpty(ss)) {
-            final BooleanQuery.Builder subBuilder = new BooleanQuery.Builder();
-            ss.stream().filter(J::nonBlank).forEach(it ->
-                    subBuilder.add(new TermQuery(new Term(fieldName, it)), BooleanClause.Occur.SHOULD)
-            );
-            builder.add(subBuilder.build(), BooleanClause.Occur.MUST);
-        }
-        return builder;
     }
 
     protected Document add(Document doc, String fieldName, IOperator operator) {

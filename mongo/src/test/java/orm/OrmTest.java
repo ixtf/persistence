@@ -11,6 +11,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import lombok.SneakyThrows;
 import orm.domain.*;
+import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
@@ -51,6 +52,10 @@ public class OrmTest {
 
     @SneakyThrows
     public static void main(String[] args) throws Exception {
+        final Mono<SilkCarRecord> mono = jmongo.find(SilkCarRecord.class, "test");
+        final SilkCarRecord silkCarRecord = mono.defaultIfEmpty(new SilkCarRecord()).block();
+        System.out.println(silkCarRecord);
+
         final SilkCar silkCar = jmongo.find(SilkCar.class, "5bffa7917979c4000146fd3d").block();
         silkCar.setNumber(silkCar.getNumber() + "-test");
         silkCar.setTestTypes(Lists.newArrayList(SilkCarType.values()));

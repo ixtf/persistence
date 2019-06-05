@@ -1,4 +1,4 @@
-package com.github.ixtf.persistence.mongo.spi;
+package com.github.ixtf.persistence.mongo;
 
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -6,21 +6,21 @@ import com.mongodb.reactivestreams.client.MongoDatabase;
 import org.bson.Document;
 
 /**
- * @author jzb 2019-02-14
+ * @author jzb 2019-02-18
  */
-public interface MongoProvider {
+public abstract class JmongoOptions {
 
-    MongoClient client();
+    public abstract MongoClient client();
 
-    default String dbName() {
+    public String dbName() {
         return "test-db";
     }
 
-    default MongoDatabase database() {
+    public MongoDatabase database() {
         return client().getDatabase(dbName());
     }
 
-    default MongoCollection<Document> collection(String name) {
+    public MongoCollection<Document> collection(String name) {
         return database().getCollection(name);
     }
 }

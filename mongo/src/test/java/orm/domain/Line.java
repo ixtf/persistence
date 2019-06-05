@@ -2,10 +2,9 @@ package orm.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import orm.LineListener;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
@@ -18,6 +17,7 @@ import java.util.Date;
 @NoArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EntityListeners(LineListener.class)
 @Entity
 public class Line implements EntityLoggable {
     @ToString.Include
@@ -75,9 +75,14 @@ public class Line implements EntityLoggable {
     @Column
     private boolean deleted;
 
-//    public Flowable<LineMachine> lineMachines() {
+    //    public Flowable<LineMachine> lineMachines() {
 //        final LineMachineRepository lineMachineRepository = Jvertx.getProxy(LineMachineRepository.class);
 //        return lineMachineRepository.listBy(this);
 //    }
+    @PostPersist
+    @PostUpdate
+    private void test() {
+        System.out.println("@PrePersist @PreUpdate Test");
+    }
 
 }

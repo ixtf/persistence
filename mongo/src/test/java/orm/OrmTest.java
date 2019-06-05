@@ -1,109 +1,90 @@
 package orm;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.ixtf.japp.poi.Jpoi;
 import com.github.ixtf.persistence.mongo.Jmongo;
-import com.github.ixtf.persistence.mongo.api.MongoUnitOfWork;
+import com.github.ixtf.persistence.mongo.JmongoOptions;
+import com.github.ixtf.persistence.mongo.MongoUnitOfWork;
 import com.google.common.collect.Lists;
-import com.mongodb.client.model.Filters;
-import com.mongodb.reactivestreams.client.MongoCollection;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoClients;
 import lombok.SneakyThrows;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.util.CellUtil;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
 import orm.domain.*;
+import reactor.core.publisher.Mono;
 
-import java.io.FileOutputStream;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
 
 import static com.github.ixtf.japp.core.Constant.MAPPER;
-import static com.github.ixtf.persistence.mongo.Jmongo.ID_COL;
 
 /**
  * @author jzb 2019-02-14
  */
 public class OrmTest {
+    private static final Jmongo jmongo = new Jmongo(new JmongoOptions() {
+        private final MongoClient mongoClient = MongoClients.create(
+                MongoClientSettings.builder()
+                        .applyConnectionString(new ConnectionString("mongodb://192.168.0.38"))
+//                    .applyConnectionString(new ConnectionString("mongodb://10.61.0.13"))
+//                    .applyConnectionString(new ConnectionString("mongodb://10.2.0.212"))
+//                    .credential(createScramSha1Credential("mes-auto", "admin", "mes-auto-mongo@com.hengyi.japp".toCharArray()))
+//                    .credential(MongoCredential.createScramSha1Credential("test", "admin", "test".toCharArray()))
+                        .build()
+        );
+
+        //    private static final MongoClient mongoClient = MongoClients.create(
+//            MongoClientSettings.builder()
+//                    .applyConnectionString(new ConnectionString("mongodb://10.61.0.13"))
+////                    .applyConnectionString(new ConnectionString("mongodb://10.2.0.212"))
+//                    .credential(createScramSha1Credential("mes-auto", "admin", "mes-auto-mongo@com.hengyi.japp".toCharArray()))
+//                    .build()
+//    );
+        @Override
+        public MongoClient client() {
+            return mongoClient;
+        }
+
+        @Override
+        public String dbName() {
+            return "mes-auto";
+        }
+    });
 
     @SneakyThrows
     public static void main(String[] args) throws Exception {
-        final MongoCollection<Document> t_silkCar = Jmongo.collection("T_SilkCar");
-        final Bson condition = Filters.regex("code", "^YJ");
-        final List<Document> documents = ReactiveStreams.fromPublisher(t_silkCar.find(condition))
-                .toList().run().toCompletableFuture().get();
-//        documents.forEach(it -> {
-//            System.out.println(it.getString("code"));
-//        });
+        final Mono<SilkCarRecord> mono = jmongo.find(SilkCarRecord.class, "test");
+        final SilkCarRecord silkCarRecord = mono.defaultIfEmpty(new SilkCarRecord()).block();
+        System.out.println(silkCarRecord);
 
-        final XSSFWorkbook wb = new XSSFWorkbook();
-        final XSSFSheet sheet = wb.createSheet();
-        IntStream.range(0,documents.size()).forEach(i->{
-            final Document document = documents.get(i);
-            final Row row = CellUtil.getRow(i, sheet);
-             Cell cell = Jpoi.cell(row, 'A');
-            cell.setCellValue(document.getString("code"));
-            cell = Jpoi.cell(row, 'B');
-            cell.setCellValue(document.getInteger("row"));
-            cell = Jpoi.cell(row, 'C');
-            cell.setCellValue(document.getInteger("col"));
-            cell = Jpoi.cell(row, 'D');
-            cell.setCellValue(document.getString("number"));
-            cell = Jpoi.cell(row, 'E');
-            cell.setCellValue(document.getString(ID_COL));
-        });
-        wb.write(new FileOutputStream("/home/jzb/silk_car_9200.xlsx"));
+        final SilkCar silkCar = jmongo.find(SilkCar.class, "5bffa7917979c4000146fd3d").block();
+        silkCar.setNumber(silkCar.getNumber() + "-test");
+        silkCar.setTestTypes(Lists.newArrayList(SilkCarType.values()));
+        jmongo.uow().registerDirty(silkCar).commit();
 
-
-//        var query = Jmongo.findById(Line.class, "5bfd4b87716bb151bd059dcc").get();
-//        final Workshop.WorkshopEmbeddable workshopEmbeddable = query.getWorkshopEmbeddable();
-//        workshopEmbeddable.setId("5bfd4b87716bb151bd059db3");
-//        workshopEmbeddable.setName("test");
-//        final Corporation.CorporationEmbeddable corporationEmbeddable = new Corporation.CorporationEmbeddable();
-//        corporationEmbeddable.setId("test");
-//        corporationEmbeddable.setName("name");
-//        workshopEmbeddable.setCorporationEmbeddable(corporationEmbeddable);
-//        Jmongo.uow().registerDirty(query).commit();
-//        System.out.println(query);
-//        final MongoUnitOfWork uow = Jmongo.uow();
-//        final Test test1 = new Test();
-//        test1.setStrings(null);
-//        uow.registerNew(test1).commit();
-//        final Test sfafdafasfasf = Jmongo.findById(Test.class, "5c7d8d7f7e4eaa47a659cb15").orElse(null);
-//        System.out.println(sfafdafasfasf);
-
-//        readTest();
-//        writeTest();
-
-//        final List<String> test = ReactiveStreams.of("test").map(it -> {
-//            if (1 == 1) {
-////                throw new RuntimeException();
-//            }
-//            return it;
-//        }).toList().run().whenComplete((v, e) -> {
-//            System.out.println(e);
-//        }).toCompletableFuture().get();
-//        System.out.println(test);
-        TimeUnit.DAYS.sleep(1);
+        var line = jmongo.find(Line.class, "5c8782bba3f0a0602365d796").block();
+        final Workshop.WorkshopEmbeddable workshopEmbeddable = Optional.ofNullable(line.getWorkshopEmbeddable()).orElse(new Workshop.WorkshopEmbeddable());
+        workshopEmbeddable.setId("5c877549a3f0a02467a817f0");
+        workshopEmbeddable.setName("test");
+        final Corporation.CorporationEmbeddable corporationEmbeddable = new Corporation.CorporationEmbeddable();
+        corporationEmbeddable.setId("5c81424f4e90f84e4542f097");
+        corporationEmbeddable.setName("name");
+        workshopEmbeddable.setCorporationEmbeddable(corporationEmbeddable);
+        line.setWorkshopEmbeddable(workshopEmbeddable);
+        jmongo.uow().registerDirty(line).commit();
     }
 
+    @SneakyThrows
     private static void writeTest() {
-        final SilkCarRecord silkCarRecord = Jmongo.findById(SilkCarRecord.class, "5bfde010d939c40001934416").get();
+        final SilkCarRecord silkCarRecord = jmongo.find(SilkCarRecord.class, "5bfde010d939c40001934416").block();
         final SilkCar silkCar = silkCarRecord.getSilkCar();
 
 //        final SilkCar silkCar = Jmongo.find(SilkCar.class, "5bfd4b4f67e7ad00013055df").get();
         silkCar.setCol(6);
-        silkCar.setDoffingType(DoffingType.AUTO);
-        MongoUnitOfWork uow = Jmongo.uow();
+//        silkCar.setDoffingType(DoffingType.AUTO);
+        MongoUnitOfWork uow = jmongo.uow();
         uow.registerDirty(silkCar).commit();
 
-        uow = Jmongo.uow();
+        uow = jmongo.uow();
         final Test test = new Test();
         test.setId("5c78ba5264279801e82ce828");
 //        test.setStrings(Lists.newArrayList("test1", "test2"));
@@ -112,18 +93,19 @@ public class OrmTest {
         uow.commit();
     }
 
+    @SneakyThrows
     private static void readTest() {
-        final Optional<SilkCar> silkCar = Jmongo.findById(SilkCar.class, "5bfd4b4f67e7ad00013055df");
+        final Optional<SilkCar> silkCar = jmongo.find(SilkCar.class, "5bfd4b4f67e7ad00013055df").blockOptional();
         ObjectNode objectNode = silkCar.map(it -> MAPPER.convertValue(it, ObjectNode.class))
                 .orElseGet(MAPPER::createObjectNode);
         System.out.println(objectNode);
 
-        final Optional<Silk> silk = Jmongo.findById(Silk.class, "5bfde010d939c400019343eb");
+        final Optional<Silk> silk = jmongo.find(Silk.class, "5bfde010d939c400019343eb").blockOptional();
         objectNode = silk.map(it -> MAPPER.convertValue(it, ObjectNode.class))
                 .orElseGet(MAPPER::createObjectNode);
         System.out.println(objectNode);
 
-        final Optional<SilkCarRecord> silkCarRecord = Jmongo.findById(SilkCarRecord.class, "5bfde010d939c40001934416");
+        final Optional<SilkCarRecord> silkCarRecord = jmongo.find(SilkCarRecord.class, "5bfde010d939c40001934416").blockOptional();
         objectNode = silkCarRecord.map(it -> MAPPER.convertValue(it, ObjectNode.class))
                 .orElseGet(MAPPER::createObjectNode);
         System.out.println(objectNode);

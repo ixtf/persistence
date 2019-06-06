@@ -1,44 +1,24 @@
 package init;
 
-import com.github.ixtf.japp.core.J;
-import com.github.ixtf.japp.poi.Jpoi;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.ixtf.persistence.mongo.Jmongo;
 import com.github.ixtf.persistence.mongo.JmongoOptions;
-import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import lombok.Cleanup;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.commons.compress.utils.Lists;
 import org.bson.Document;
-import org.bson.types.ObjectId;
-import orm.domain.SilkCar;
-import orm.domain.SilkCarType;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.FileInputStream;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.util.Collection;
 
-import static com.github.ixtf.persistence.mongo.Jmongo.ID_COL;
+import static com.github.ixtf.japp.core.Constant.MAPPER;
 import static com.mongodb.MongoCredential.createScramSha1Credential;
 import static com.mongodb.client.model.Filters.eq;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 
 /**
  * @author jzb 2019-05-16
@@ -48,8 +28,8 @@ public class Test {
         private final MongoClient mongoClient = MongoClients.create(
                 MongoClientSettings.builder()
 //                        .applyConnectionString(new ConnectionString("mongodb://192.168.0.38"))
-                        .applyConnectionString(new ConnectionString("mongodb://10.61.0.13"))
-//                    .applyConnectionString(new ConnectionString("mongodb://10.2.0.212"))
+//                        .applyConnectionString(new ConnectionString("mongodb://10.61.0.13"))
+                        .applyConnectionString(new ConnectionString("mongodb://10.2.0.212"))
                         .credential(createScramSha1Credential("mes-auto", "admin", "mes-auto-mongo@com.hengyi.japp".toCharArray()))
 //                    .credential(MongoCredential.createScramSha1Credential("test", "admin", "test".toCharArray()))
                         .build()
@@ -74,80 +54,24 @@ public class Test {
     });
 
     public static void main(String[] args) {
-        final MongoCollection<Document> t_silkcar = jmongo.collection(SilkCar.class);
-        final List<Document> documents = IntStream.rangeClosed(900, 1249).mapToObj(i -> {
-            final String s = Strings.padStart("" + i, 4, '0');
-            final String number = "P60" + s;
-            final String code = "9200" + number;
-            final Date currentDate = new Date();
-            final Document silkCar = new Document().append(ID_COL, ObjectId.get().toHexString())
-                    .append("type", SilkCarType.BIG_SILK_CAR.name())
-                    .append("number", number)
-                    .append("code", code)
-                    .append("row", 3)
-                    .append("col", 5)
-                    .append("pliesNum", 2)
-                    .append("creator", "5b384b2cd8712064f101e31e")
-                    .append("cdt", currentDate)
-                    .append("modifier", "5b384b2cd8712064f101e31e")
-                    .append("mdt", currentDate);
-            return silkCar;
-        }).collect(toList());
-        Mono.from(t_silkcar.insertMany(documents)).block();
+        check("{\"spindle\":[{\"spindleCode\":\"008L00BIK12F\",\"weight\":\"0\"},{\"spindleCode\":\"008L000MQ01F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096S08F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096S09F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096S10F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096S11F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0095L12F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0090C07F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0090C08F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0090C09F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0090C10F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0090C11F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0090C12F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096607F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096608F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096609F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096610F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096612F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0091H01F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0091H02F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0091H03F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0091H04F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0091H05F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0091H06F\",\"weight\":\"0\"},{\"spindleCode\":\"008L008ZR01F\",\"weight\":\"0\"},{\"spindleCode\":\"008L008ZR02F\",\"weight\":\"0\"},{\"spindleCode\":\"008L008ZR03F\",\"weight\":\"0\"},{\"spindleCode\":\"008L008ZR04F\",\"weight\":\"0\"},{\"spindleCode\":\"008L008ZR05F\",\"weight\":\"0\"},{\"spindleCode\":\"008L008ZR06F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0094Y01F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0094Y02F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0094Y03F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0094Y04F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0094Y06F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0095L01F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0095L02F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0095L03F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0095L04F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0095L05F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0095L06F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0090C02F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0090C03F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0090C04F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0090C05F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096601F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096602F\",\"weight\":\"0\"},{\"spindleCode\":\"008L0096606F\",\"weight\":\"0\"}],\"boxCode\":\"010220190606GF0107011F1339\",\"netWeight\":\"732\",\"grossWeight\":\"765.3\",\"grade\":\"AA\",\"automaticPackeLine\":\"1\",\"classno\":\"1\"}");
     }
 
     @SneakyThrows
-    private static Stream<Document> test(Map<String, String> groupMap, MongoCollection<Document> t_operator, MongoCollection<Document> t_login) {
-        @Cleanup final Workbook wb = new HSSFWorkbook(new FileInputStream("/home/jzb/Documents/WeChat Files/jinzhaobo_ixtf/Files/人员名单.xls"));
-        final Sheet sheet = wb.getSheetAt(0);
-        return IntStream.rangeClosed(1, sheet.getLastRowNum())
-                .mapToObj(sheet::getRow)
-                .filter(row -> {
-                    final String hrId = getString(row, 'A');
-                    final Long count = Flux.concat(t_operator.find(eq("hrId", hrId)), t_login.find(eq("loginId", hrId)))
-                            .count().block();
-                    if (count > 0) {
-                        System.out.println(hrId);
-                    }
-                    return count == 0;
-                })
-                .map(row -> {
-                    final Document document = new Document()
-                            .append("_id", ObjectId.get().toHexString())
-                            .append("hrId", getString(row, 'A'))
-                            .append("name", getString(row, 'B'));
-                    final String eString = getString(row, 'E');
-                    if (StringUtils.contains(eString, "打包")) {
-                        document.append("roles", Sets.newHashSet("PACKAGE_BOX"));
-                    }
-                    final Set<String> groups = groupMap.entrySet().parallelStream()
-                            .filter(entry -> {
-                                final String key = entry.getKey();
-                                final String iString = getString(row, 'I');
-                                if (J.nonBlank(iString)) {
-                                    final boolean b = StringUtils.contains(key, iString);
-                                    if (b) {
-                                        return true;
-                                    }
-                                }
-                                final String kString = getString(row, 'K');
-                                if (J.nonBlank(kString)) {
-                                    final boolean b = StringUtils.contains(key, kString);
-                                    if (b) {
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            })
-                            .map(Map.Entry::getValue)
-                            .collect(toSet());
-                    return document.append("groups", groups);
-                });
-    }
-
-    private static String getString(Row row, char c) {
-        final Cell cell = Jpoi.cell(row, c);
-        final String ret = cell.getStringCellValue();
-        return StringUtils.deleteWhitespace(ret);
+    private static void check(String json) {
+        final JsonNode jsonNode = MAPPER.readTree(json);
+        final String boxCode = jsonNode.get("boxCode").asText();
+        final MongoCollection<Document> t_silk = jmongo.collection("T_Silk");
+        final Collection<Mono<Document>> silks = Lists.newArrayList();
+        for (JsonNode spindleNode : jsonNode.get("spindle")) {
+            final String spindleCode = spindleNode.get("spindleCode").asText();
+            final Mono<Document> silk = Mono.from(t_silk.find(eq("code", spindleCode)));
+            silks.add(silk);
+        }
+        Flux.merge(silks).toStream().forEach(document -> {
+            final String code = document.getString("code");
+            final String batchId = document.getString("batch");
+            String.join("\t", boxCode, code, batchId);
+        });
     }
 }

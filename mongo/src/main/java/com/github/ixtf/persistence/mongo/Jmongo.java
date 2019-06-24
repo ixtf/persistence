@@ -4,7 +4,12 @@ import com.github.ixtf.persistence.api.EntityConverter;
 import com.github.ixtf.persistence.reflection.ClassRepresentation;
 import com.github.ixtf.persistence.reflection.ClassRepresentations;
 import com.github.ixtf.persistence.reflection.FieldRepresentation;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -19,27 +24,58 @@ import static com.mongodb.client.model.Filters.eq;
  * @author jzb 2019-02-14
  */
 @Slf4j
-public class Jmongo {
+public abstract class Jmongo {
     public static final String ID_COL = "_id";
-    private final JmongoOptions options;
     private final EntityConverter entityConverter;
+    private static final LoadingCache<Class<? extends JmongoOptions>, Jmongo> CACHE = CacheBuilder.newBuilder()
+            .build(new CacheLoader<>() {
+                @Override
+                public Jmongo load(Class<? extends JmongoOptions> clazz) throws Exception {
+                    final JmongoOptions options = clazz.getDeclaredConstructor().newInstance();
+                    final MongoClient client = options.client();
+                    final String dbName = options.dbName();
+                    return new Jmongo() {
+                        @Override
+                        public MongoClient client() {
+                            return client;
+                        }
 
-    public Jmongo(JmongoOptions options) {
-        this.options = options;
+                        @Override
+                        public MongoDatabase database() {
+                            return client.getDatabase(dbName);
+                        }
+                    };
+                }
+            });
+
+    private Jmongo() {
         entityConverter = DocumentEntityConverter.get(this);
     }
 
-    public MongoUnitOfWork uow() {
-        return new MongoUnitOfWork(this);
+    @SneakyThrows
+    public static Jmongo of(Class<? extends JmongoOptions> clazz) {
+        return CACHE.get(clazz);
     }
 
+    public abstract MongoClient client();
+
+    public abstract MongoDatabase database();
+
     public MongoCollection<Document> collection(String name) {
-        return options.collection(name);
+        return database().getCollection(name);
+    }
+
+    public Document toDocument(Object o) {
+        return entityConverter.toDbData(new Document(), o);
     }
 
     public MongoCollection<Document> collection(Class entityClass) {
         final ClassRepresentation classRepresentation = ClassRepresentations.create(entityClass);
         return collection(classRepresentation.getTableName());
+    }
+
+    public MongoUnitOfWork uow() {
+        return new MongoUnitOfWork(this);
     }
 
     public <T> Mono<T> find(Class<T> entityClass, Object id) {
@@ -91,14 +127,6 @@ public class Jmongo {
         final String idFieldName = classRepresentation.getId().map(FieldRepresentation::getFieldName).get();
         final Object id = PropertyUtils.getProperty(entity, idFieldName);
         return exists(entity.getClass(), id);
-    }
-
-    public Document toDocument(Object o) {
-//        final ClassRepresentation classRepresentation = ClassRepresentations.create(o);
-//        if (!classRepresentation.hasId()) {
-//            throw new RuntimeException("Class[" + o.getClass() + "]，id不存在");
-//        }
-        return entityConverter.toDbData(new Document(), o);
     }
 
 }

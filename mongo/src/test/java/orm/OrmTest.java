@@ -2,13 +2,8 @@ package orm;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.ixtf.persistence.mongo.Jmongo;
-import com.github.ixtf.persistence.mongo.JmongoOptions;
 import com.github.ixtf.persistence.mongo.MongoUnitOfWork;
 import com.google.common.collect.Lists;
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.reactivestreams.client.MongoClient;
-import com.mongodb.reactivestreams.client.MongoClients;
 import lombok.SneakyThrows;
 import orm.domain.*;
 import reactor.core.publisher.Mono;
@@ -21,34 +16,7 @@ import static com.github.ixtf.japp.core.Constant.MAPPER;
  * @author jzb 2019-02-14
  */
 public class OrmTest {
-    private static final Jmongo jmongo = new Jmongo(new JmongoOptions() {
-        private final MongoClient mongoClient = MongoClients.create(
-                MongoClientSettings.builder()
-                        .applyConnectionString(new ConnectionString("mongodb://192.168.0.38"))
-//                    .applyConnectionString(new ConnectionString("mongodb://10.61.0.13"))
-//                    .applyConnectionString(new ConnectionString("mongodb://10.2.0.212"))
-//                    .credential(createScramSha1Credential("mes-auto", "admin", "mes-auto-mongo@com.hengyi.japp".toCharArray()))
-//                    .credential(MongoCredential.createScramSha1Credential("test", "admin", "test".toCharArray()))
-                        .build()
-        );
-
-        //    private static final MongoClient mongoClient = MongoClients.create(
-//            MongoClientSettings.builder()
-//                    .applyConnectionString(new ConnectionString("mongodb://10.61.0.13"))
-////                    .applyConnectionString(new ConnectionString("mongodb://10.2.0.212"))
-//                    .credential(createScramSha1Credential("mes-auto", "admin", "mes-auto-mongo@com.hengyi.japp".toCharArray()))
-//                    .build()
-//    );
-        @Override
-        public MongoClient client() {
-            return mongoClient;
-        }
-
-        @Override
-        public String dbName() {
-            return "mes-auto";
-        }
-    });
+    private static final Jmongo jmongo = Jmongo.of(JmongoDev.class);
 
     @SneakyThrows
     public static void main(String[] args) throws Exception {

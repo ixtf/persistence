@@ -30,13 +30,13 @@ public class OrmTest {
         jmongo.uow().registerDirty(silkCar).commit();
 
         var line = jmongo.find(Line.class, "5c8782bba3f0a0602365d796").block();
-        final Workshop.WorkshopEmbeddable workshopEmbeddable = Optional.ofNullable(line.getWorkshopEmbeddable()).orElse(new Workshop.WorkshopEmbeddable());
+        final WorkshopEmbeddable workshopEmbeddable = Optional.ofNullable(line.getWorkshopEmbeddable()).orElse(new WorkshopEmbeddable());
         workshopEmbeddable.setId("5c877549a3f0a02467a817f0");
         workshopEmbeddable.setName("test");
-        final Corporation.CorporationEmbeddable corporationEmbeddable = new Corporation.CorporationEmbeddable();
+        final CorporationEmbeddable corporationEmbeddable = new CorporationEmbeddable();
         corporationEmbeddable.setId("5c81424f4e90f84e4542f097");
         corporationEmbeddable.setName("name");
-        workshopEmbeddable.setCorporationEmbeddable(corporationEmbeddable);
+        workshopEmbeddable.setCorporation(corporationEmbeddable);
         line.setWorkshopEmbeddable(workshopEmbeddable);
         jmongo.uow().registerDirty(line).commit();
     }

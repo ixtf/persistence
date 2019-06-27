@@ -1,17 +1,14 @@
 package orm.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.github.ixtf.persistence.IEntity;
 import lombok.*;
 
 import javax.persistence.Column;
-import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
-import java.util.Date;
 
 /**
  * 公司
@@ -22,7 +19,7 @@ import java.util.Date;
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
-public class Corporation implements EntityLoggable {
+public class Corporation implements IEntity {
     @ToString.Include
     @EqualsAndHashCode.Include
     @Getter
@@ -52,45 +49,10 @@ public class Corporation implements EntityLoggable {
     @Column
     @NotBlank
     private String name;
-
-    @JsonIgnore
-    @Getter
-    @Setter
-    @Column
-    @NotNull
-    private Operator creator;
-    @JsonIgnore
-    @Getter
-    @Setter
-    @Column(name = "cdt")
-    @NotNull
-    private Date createDateTime;
-    @JsonIgnore
-    @Getter
-    @Setter
-    @Column
-    private Operator modifier;
-    @JsonIgnore
-    @Getter
-    @Setter
-    @Column(name = "mdt")
-    private Date modifyDateTime;
     @JsonIgnore
     @Getter
     @Setter
     @Column
     private boolean deleted;
-
-    @Embeddable
-    public static class CorporationEmbeddable implements Serializable {
-        @Getter
-        @Setter
-        @Id
-        private String id;
-        @Getter
-        @Setter
-        @Column
-        private String name;
-    }
 
 }

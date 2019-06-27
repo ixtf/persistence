@@ -1,4 +1,4 @@
-package redis;
+package event;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.ixtf.japp.core.J;

@@ -22,15 +22,13 @@ public interface EntityConverter {
     });
 
     static AttributeConverter attributeConverter(FieldRepresentation fieldRepresentation) {
-        return fieldRepresentation.getConverter()
-                .map(it -> {
-                    try {
-                        return CONVERTER_CACHE.get(it);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .orElse(null);
+        return fieldRepresentation.getConverter().map(it -> {
+            try {
+                return CONVERTER_CACHE.get(it);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }).orElse(null);
     }
 
     default <T> T toEntity(Class<T> entityClass, Object dbData) {

@@ -35,7 +35,7 @@ public class Line implements EntityLoggable {
     @Getter
     @Setter
     @Column
-    private Workshop.WorkshopEmbeddable workshopEmbeddable;
+    private WorkshopEmbeddable workshopEmbeddable;
     @ToString.Include
     @Getter
     @Setter

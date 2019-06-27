@@ -4,13 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.Column;
-import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
 
@@ -102,21 +100,5 @@ public class Workshop implements EntityLoggable {
     @Setter
     @Column
     private boolean deleted;
-
-    @Embeddable
-    public static class WorkshopEmbeddable implements Serializable {
-        @Getter
-        @Setter
-        @Id
-        private String id;
-        @Getter
-        @Setter
-        @Column
-        private String name;
-        @Getter
-        @Setter
-        @Column(name = "corporation")
-        private Corporation.CorporationEmbeddable corporationEmbeddable;
-    }
 
 }

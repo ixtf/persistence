@@ -18,7 +18,6 @@ public class Jmongo3000 extends JmongoOptions {
                 MongoClientSettings.builder()
                         .applyConnectionString(new ConnectionString("mongodb://10.2.0.212"))
                         .credential(createScramSha1Credential("mes-auto", "admin", "mes-auto-mongo@com.hengyi.japp".toCharArray()))
-                        .credential(createScramSha1Credential("test", "admin", "test".toCharArray()))
                         .build()
         );
     }

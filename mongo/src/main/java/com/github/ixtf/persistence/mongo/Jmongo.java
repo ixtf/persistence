@@ -69,6 +69,10 @@ public abstract class Jmongo {
         return entityConverter.toDbData(new Document(), o);
     }
 
+    public <T> T toEntity(Class<T> entityClass, Document document) {
+        return entityConverter.toEntity(entityClass, document);
+    }
+
     public MongoCollection<Document> collection(Class entityClass) {
         final ClassRepresentation classRepresentation = ClassRepresentations.create(entityClass);
         return collection(classRepresentation.getTableName());

@@ -35,7 +35,7 @@ public class OrmTest {
         workshopEmbeddable.setName("test");
         final CorporationEmbeddable corporationEmbeddable = new CorporationEmbeddable();
         corporationEmbeddable.setId("5c81424f4e90f84e4542f097");
-        corporationEmbeddable.setName("name");
+//        corporationEmbeddable.setName("name");
         workshopEmbeddable.setCorporation(corporationEmbeddable);
         line.setWorkshopEmbeddable(workshopEmbeddable);
         jmongo.uow().registerDirty(line).commit();

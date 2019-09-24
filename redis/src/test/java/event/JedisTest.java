@@ -1,14 +1,15 @@
 package event;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.ixtf.japp.core.J;
 import lombok.SneakyThrows;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
-import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.github.ixtf.japp.core.Constant.MAPPER;
 
@@ -22,50 +23,25 @@ public class JedisTest {
 
     @SneakyThrows
     public static void main(String[] args) {
-        // 5c8b98dd276e570001ebdd6b
-        // 5c8b8355276e5700015bf023
-        final String redisKey = "SilkCarRuntime[3000F2507]";
-//        final Set<String> fields = Sets.newHashSet();
-        test("SilkCarRuntime[3000F2507]");
-        test("SilkCarRuntime[3000F2756]");
-        System.out.println("end");
-    }
-
-    private static void test(String redisKey) throws IOException {
-        try (Jedis jedis = JEDIS_POOL.getResource()) {
-            final Map<String, String> map = jedis.hgetAll(redisKey);
-            for (Map.Entry<String, String> entry : map.entrySet()) {
-                final String field = entry.getKey();
-                if (!field.startsWith("EventSource")) {
-                    continue;
+        try (final Jedis jedis = JEDIS_POOL.getResource()) {
+            final Map<String, String> map = jedis.hgetAll("SilkCarRuntime[3000P30292]_todo");
+            final Map<String, String> newMap = map.keySet().stream().filter(key -> {
+                try {
+                    if (!key.startsWith("EventSource.")) {
+                        return true;
+                    }
+                    final String json = map.get(key);
+                    final JsonNode jsonNode = MAPPER.readTree(json);
+                    if (Objects.equals("if_riamb", jsonNode.get("operator").get("id").asText())) {
+                        return false;
+                    }
+                    return true;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-                final JsonNode jsonNode = MAPPER.readTree(entry.getValue());
-                if (!"JikonAdapterSilkDetachEvent".equals(jsonNode.get("type").asText(null))) {
-                    continue;
-                }
-                final String spindleCode = jsonNode.get("command").get("spindleCode").asText(null);
-                if (J.isBlank(spindleCode)) {
-                    jedis.hdel(redisKey,field);
-//                    fields.add(field);
-//                    System.out.println(field);
-                }
-            }
-//            jedis.hdel(redisKey, fields.toArray(new String[fields.size()]));
-//            final Long l = jedis.publish("SilkBarcodePrinter-test-C5", "testtest");
-//            final List<String> strings = jedis.pubsubChannels("SilkBarcodePrinter-*");
-//            System.out.println(strings);
-//            final Map<String, String> map = jedis.pubsubNumSub("SilkBarcodePrinter-*");
-//            System.out.println(map);
-//            jedis.hset("test", ImmutableMap.of("key2", "key2-update", "key4", "key4"));
-//            System.out.println(jedis);
-//
-//            jedis.set("ttl-test", "3");
-//            final Long incr = jedis.incr("ttl-test");
-//            System.out.println(incr);
-//            final String s = jedis.get("ttl-test");
-//            System.out.println(s);
-//            final Long ttl = jedis.ttl("ttl-test");
-//            System.out.println(ttl);
+            }).collect(Collectors.toMap(Function.identity(), map::get));
+            jedis.hset("SilkCarRuntime[3000P30292]", newMap);
+            System.out.println("end");
         }
     }
 }

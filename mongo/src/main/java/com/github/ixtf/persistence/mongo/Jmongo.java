@@ -27,26 +27,25 @@ import static com.mongodb.client.model.Filters.eq;
 public abstract class Jmongo {
     public static final String ID_COL = "_id";
     private final EntityConverter entityConverter;
-    private static final LoadingCache<Class<? extends JmongoOptions>, Jmongo> CACHE = CacheBuilder.newBuilder()
-            .build(new CacheLoader<>() {
+    private static final LoadingCache<Class<? extends JmongoOptions>, Jmongo> CACHE = CacheBuilder.newBuilder().build(new CacheLoader<>() {
+        @Override
+        public Jmongo load(Class<? extends JmongoOptions> clazz) throws Exception {
+            final JmongoOptions options = clazz.getDeclaredConstructor().newInstance();
+            final MongoClient client = options.client();
+            final String dbName = options.dbName();
+            return new Jmongo() {
                 @Override
-                public Jmongo load(Class<? extends JmongoOptions> clazz) throws Exception {
-                    final JmongoOptions options = clazz.getDeclaredConstructor().newInstance();
-                    final MongoClient client = options.client();
-                    final String dbName = options.dbName();
-                    return new Jmongo() {
-                        @Override
-                        public MongoClient client() {
-                            return client;
-                        }
-
-                        @Override
-                        public MongoDatabase database() {
-                            return client.getDatabase(dbName);
-                        }
-                    };
+                public MongoClient client() {
+                    return client;
                 }
-            });
+
+                @Override
+                public MongoDatabase database() {
+                    return client.getDatabase(dbName);
+                }
+            };
+        }
+    });
 
     private Jmongo() {
         entityConverter = DocumentEntityConverter.get(this);

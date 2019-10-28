@@ -11,7 +11,6 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -23,7 +22,6 @@ import static com.mongodb.client.model.Filters.eq;
 /**
  * @author jzb 2019-02-14
  */
-@Slf4j
 public abstract class Jmongo {
     public static final String ID_COL = "_id";
     private final EntityConverter entityConverter;
@@ -121,7 +119,7 @@ public abstract class Jmongo {
     }
 
     public Mono<Boolean> exists(Class<?> entityClass, Object id) {
-        return count(entityClass, eq(ID_COL, id)).map(it -> it > 0);
+        return id == null ? Mono.just(false) : count(entityClass, eq(ID_COL, id)).map(it -> it > 0);
     }
 
     @SneakyThrows

@@ -5,5 +5,4 @@ dependencies {
     testCompile 'com.github.ixtf.japp:poi'
     testCompile 'com.github.ixtf.japp:codec'
     testImplementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '4.1.0'
-
 }

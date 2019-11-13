@@ -56,7 +56,7 @@ public final class ClassRepresentations {
         final FieldType fieldType = FieldType.of(field);
         final boolean id = field.getAnnotation(Id.class) != null;
         final String columnName = id ? null : getColumnName(field);
-        FieldRepresentationBuilder builder = FieldRepresentation.builder().withColName(columnName)
+        final FieldRepresentationBuilder builder = FieldRepresentation.builder().withColName(columnName)
                 .withField(field)
                 .withType(fieldType)
                 .withId(id);

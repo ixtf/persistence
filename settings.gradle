@@ -1,6 +1,6 @@
 rootProject.name = 'com.github.ixtf.persistence'
 include 'core'
 include 'lucene'
+include 'elasticsearch'
 include 'mongo'
 include 'redis'
-

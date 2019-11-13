@@ -1,0 +1,5 @@
+dependencies {
+    compile 'com.github.ixtf.japp:core',
+            'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.4.2',
+            'io.projectreactor:reactor-core'
+}

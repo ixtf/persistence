@@ -17,7 +17,7 @@ import java.util.stream.StreamSupport;
  * @author jzb 2019-02-18
  */
 public abstract class AbstractEntityConverter implements EntityConverter {
-    @SneakyThrows
+    @SneakyThrows({InstantiationException.class, IllegalAccessException.class, IllegalArgumentException.class, InvocationTargetException.class})
     @Override
     public <T> T toEntity(ClassRepresentation<T> classRepresentation, Object dbData) {
         final T entity = classRepresentation.getConstructor().newInstance();

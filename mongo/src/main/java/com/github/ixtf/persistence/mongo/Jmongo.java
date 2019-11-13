@@ -14,6 +14,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -79,12 +80,16 @@ public abstract class Jmongo {
         return new MongoUnitOfWork(this);
     }
 
+    public <T> Flux<T> find(Class<T> entityClass) {
+        return Flux.from(collection(entityClass).find()).map(it -> entityConverter.toEntity(entityClass, it));
+    }
+
     public <T> Mono<T> find(Class<T> entityClass, Object id) {
         return find(entityClass, eq(ID_COL, id));
     }
 
-    public <T> Flux<T> find(Class<T> entityClass, Flux ids) {
-        return ids.flatMap(id -> find(entityClass, id));
+    public <T> Flux<T> find(Class<T> entityClass, Publisher ids) {
+        return Flux.from(ids).flatMap(id -> find(entityClass, id));
     }
 
     // 按条件查询

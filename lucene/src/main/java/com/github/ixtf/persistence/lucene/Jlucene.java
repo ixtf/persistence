@@ -21,14 +21,15 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toUnmodifiableMap;
 
 /**
  * @author jzb 2019-05-29
@@ -176,17 +177,30 @@ public class Jlucene {
         return builder;
     }
 
+    public static BooleanQuery.Builder add(BooleanQuery.Builder builder, @NotBlank String fieldName, long startL, long endL) {
+        builder.add(LongPoint.newRangeQuery(fieldName, startL, endL), BooleanClause.Occur.MUST);
+        return builder;
+    }
+
     public static BooleanQuery.Builder add(BooleanQuery.Builder builder, @NotBlank String fieldName, Date startDate, Date endDate) {
-        builder.add(LongPoint.newRangeQuery(fieldName, startDate.getTime(), endDate.getTime()), BooleanClause.Occur.MUST);
+        if (startDate != null && endDate != null) {
+            return add(builder, fieldName, startDate.getTime(), endDate.getTime());
+        }
         return builder;
     }
 
     public static BooleanQuery.Builder add(BooleanQuery.Builder builder, @NotBlank String fieldName, LocalDate startLd, LocalDate endLd) {
-        return add(builder, fieldName, J.date(startLd), J.date(endLd));
+        if (startLd != null && endLd != null) {
+            return add(builder, fieldName, J.date(startLd), J.date(endLd));
+        }
+        return builder;
     }
 
     public static BooleanQuery.Builder add(BooleanQuery.Builder builder, @NotBlank String fieldName, LocalDateTime startLdt, LocalDateTime endLdt) {
-        return add(builder, fieldName, J.date(startLdt), J.date(endLdt));
+        if (startLdt != null && endLdt != null) {
+            return add(builder, fieldName, J.date(startLdt), J.date(endLdt));
+        }
+        return builder;
     }
 
     public static BooleanQuery.Builder addWildcard(BooleanQuery.Builder builder, @NotBlank String fieldName, String q) {
@@ -195,7 +209,7 @@ public class Jlucene {
     }
 
     @SneakyThrows(IOException.class)
-    public static Map<String, BaseLucene> collectBaseLucene(String pkgName, Function<Class, Object> getInstanceFun) {
+    public static Stream<? extends Class<?>> streamBaseLucene(String pkgName) {
         return ClassPath.from(Thread.currentThread().getContextClassLoader())
                 .getTopLevelClasses(pkgName)
                 .parallelStream()
@@ -205,8 +219,6 @@ public class Jlucene {
                     final int mod = it.getModifiers();
                     return !Modifier.isAbstract(mod) && !Modifier.isInterface(mod);
                 })
-                .map(getInstanceFun)
-                .map(BaseLucene.class::cast)
-                .collect(toUnmodifiableMap(it -> it.getEntityClass().getName(), Function.identity()));
+                .distinct();
     }
 }

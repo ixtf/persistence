@@ -4,15 +4,16 @@ import com.github.ixtf.persistence.IEntity;
 import lombok.Data;
 import lombok.SneakyThrows;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
  * @author jzb 2019-11-12
  */
 @Data
-public class LuceneCommand implements Serializable {
+public class LuceneCommandAll implements Serializable {
+    @NotBlank
     private String className;
-    private String id;
 
     @SneakyThrows(ClassNotFoundException.class)
     public Class<? extends IEntity> getClazz() {

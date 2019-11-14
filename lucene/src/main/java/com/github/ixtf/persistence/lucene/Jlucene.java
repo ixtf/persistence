@@ -204,7 +204,9 @@ public class Jlucene {
     }
 
     public static BooleanQuery.Builder addWildcard(BooleanQuery.Builder builder, @NotBlank String fieldName, String q) {
-        builder.add(new WildcardQuery(new Term(fieldName, q)), BooleanClause.Occur.MUST);
+        ofNullable(q).filter(J::nonBlank)
+                .map(it -> new WildcardQuery(new Term(fieldName, it)))
+                .ifPresent(it -> builder.add(it, BooleanClause.Occur.MUST));
         return builder;
     }
 

@@ -5,6 +5,7 @@ import com.github.ixtf.persistence.IEntity;
 import com.github.ixtf.persistence.IEntityLoggable;
 import com.google.common.reflect.ClassPath;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
@@ -138,7 +139,9 @@ public class Jlucene {
     }
 
     public static void addFacet(@NotNull Document doc, @NotBlank String fieldName, String... path) {
-        doc.add(new FacetField(fieldName, path));
+        if (ArrayUtils.isNotEmpty(path)) {
+            doc.add(new FacetField(fieldName, path));
+        }
     }
 
     @SneakyThrows(ParseException.class)

@@ -1,65 +1,68 @@
 package com.github.ixtf.persistence.reflection;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.ixtf.japp.core.J;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import lombok.SneakyThrows;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static java.util.Objects.nonNull;
-import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 /**
  * @author jzb 2019-02-14
  */
 public final class ClassRepresentations {
-    private static final LoadingCache<Class, ClassRepresentation> cache = CacheBuilder.newBuilder().build(new CacheLoader<>() {
-        @Override
-        public ClassRepresentation load(Class entityClass) throws Exception {
-            final Constructor constructor = makeAccessible(entityClass);
-            final String tableName = tableName(entityClass);
-
-            final Predicate<Field> hasColumnAnnotation = f -> f.getAnnotation(Column.class) != null;
-            final Predicate<Field> hasIdAnnotation = f -> f.getAnnotation(Id.class) != null;
-            final Predicate<Field> fieldPredicate = hasColumnAnnotation.or(hasIdAnnotation);
-            final List<FieldRepresentation> fields = FieldUtils.getAllFieldsList(entityClass).stream()
-                    .filter(fieldPredicate).map(ClassRepresentations::to).collect(toList());
-
-            return new DefaultClassRepresentation(tableName, entityClass, constructor, fields);
-        }
+    private static final LoadingCache<Class, ClassRepresentation> cache = Caffeine.newBuilder().build(entityClass -> {
+        final Constructor constructor = makeAccessible(entityClass);
+        final String tableName = tableName(entityClass);
+        final List<FieldRepresentation> fields = FieldUtils.getAllFieldsList(entityClass)
+                .parallelStream()
+                .filter(field -> {
+                    final Id idAnnotation = field.getAnnotation(Id.class);
+                    if (idAnnotation != null) {
+                        return true;
+                    }
+                    final Transient transientAnnotation = field.getAnnotation(Transient.class);
+                    return transientAnnotation == null;
+                })
+                .map(ClassRepresentations::to)
+                .collect(toUnmodifiableList());
+        return new DefaultClassRepresentation(tableName, entityClass, constructor, fields);
+    });
+    private static final LoadingCache<Class<? extends AttributeConverter>, AttributeConverter> converterCache = Caffeine.newBuilder().build(clazz -> {
+        final Constructor constructor = makeAccessible(clazz);
+        return (AttributeConverter) constructor.newInstance();
     });
 
     public static <T> ClassRepresentation<T> create(T o) {
         return create((Class<T>) o.getClass());
     }
 
-    @SneakyThrows
     public static <T> ClassRepresentation<T> create(Class<T> entityClass) {
         return cache.get(J.actualClass(entityClass));
     }
 
     private static FieldRepresentation to(Field field) {
         final FieldType fieldType = FieldType.of(field);
-        final boolean id = field.getAnnotation(Id.class) != null;
-        final String columnName = id ? null : getColumnName(field);
-        final FieldRepresentationBuilder builder = FieldRepresentation.builder().withColName(columnName)
+        final Id idAnnotation = field.getAnnotation(Id.class);
+        final Column columnAnnotation = field.getAnnotation(Column.class);
+        final boolean id = idAnnotation != null;
+        final String columnName = id ? null : ofNullable(columnAnnotation).map(Column::name).filter(J::nonBlank).orElseGet(field::getName);
+        final FieldRepresentationBuilder builder = FieldRepresentation.builder()
+                .withId(id)
+                .withColName(columnName)
                 .withField(field)
-                .withType(fieldType)
-                .withId(id);
+                .withType(fieldType);
         final Convert convert = field.getAnnotation(Convert.class);
         if (nonNull(convert)) {
             builder.withConverter(convert.converter());
@@ -75,20 +78,12 @@ public final class ClassRepresentations {
         }
     }
 
-    private static String getColumnName(Field field) {
-        requireNonNull(field);
-        return Optional.ofNullable(field.getAnnotation(Column.class))
-                .map(Column::name)
-                .filter(J::nonBlank)
-                .orElseGet(field::getName);
-    }
-
-    private static String tableName(Class<?> clazz) {
+    private static String tableName(@NotNull Class<?> clazz) {
         final Entity annotation = clazz.getAnnotation(Entity.class);
         if (annotation == null) {
             return null;
         }
-        return Optional.ofNullable(annotation.name())
+        return ofNullable(annotation.name())
                 .filter(J::nonBlank)
                 .orElseGet(() -> {
                     final String simpleName = clazz.getSimpleName();

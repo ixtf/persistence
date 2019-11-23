@@ -28,7 +28,16 @@ public abstract class AbstractEntityConverter implements EntityConverter {
         return entity;
     }
 
-    @SneakyThrows
+    @Override
+    public void fillEntity(Object entity, Object dbData) {
+        final ClassRepresentation<Object> classRepresentation = ClassRepresentations.create(entity);
+        classRepresentation.getFields().stream().forEach(it -> {
+            final Object colValue = getColValue(it, dbData);
+            fillEntityAttribute(entity, it, colValue);
+        });
+    }
+
+    @SneakyThrows({IllegalAccessException.class, NoSuchMethodException.class, InvocationTargetException.class})
     private void fillEntityAttribute(Object entity, FieldRepresentation fieldRepresentation, Object colValue) {
         final String fieldName = fieldRepresentation.getFieldName();
         final Class<?> nativeType = fieldRepresentation.getFieldType();

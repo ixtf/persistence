@@ -1,10 +1,10 @@
 package com.github.ixtf.persistence.api;
 
+import com.github.benmanes.caffeine.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.ixtf.japp.core.J;
 import com.github.ixtf.persistence.IEntity;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
@@ -26,7 +26,7 @@ import static org.apache.commons.lang3.reflect.MethodUtils.getMethodsListWithAnn
  * @author jzb 2019-02-18
  */
 public abstract class AbstractUnitOfWork implements UnitOfWork {
-    private static final LoadingCache<Class<? extends IEntity>, Multimap<Class<? extends Annotation>, PersistenceCallback>> cache = CacheBuilder.newBuilder().build(new CacheLoader<>() {
+    private static final LoadingCache<Class<? extends IEntity>, Multimap<Class<? extends Annotation>, PersistenceCallback>> cache = Caffeine.newBuilder().build(new CacheLoader<>() {
         @Override
         public Multimap<Class<? extends Annotation>, PersistenceCallback> load(Class<? extends IEntity> entityClass) throws Exception {
             final Multimap<Class<? extends Annotation>, PersistenceCallback> multimap = ArrayListMultimap.create();

@@ -13,4 +13,8 @@ public abstract class JmongoOptions {
         return "test-db";
     }
 
+    protected EntityCacheOptions entityCacheOptions() {
+        return EntityCacheOptions.builder().build();
+    }
+
 }

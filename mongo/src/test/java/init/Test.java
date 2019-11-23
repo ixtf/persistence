@@ -10,12 +10,7 @@ import orm.Jmongo3000;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import static com.github.ixtf.persistence.mongo.Jmongo.ID_COL;
 import static com.mongodb.client.model.Filters.*;
@@ -29,67 +24,35 @@ public class Test {
 
     @SneakyThrows
     public static void main(String[] args) {
-        fixPackageBox();
-//        fixDyeingPrepare();
+        final MongoCollection<Document> T_SilkBarcode = jmongo.collection("T_SilkBarcode");
+        final MongoCollection<Document> T_Silk = jmongo.collection("T_Silk");
+        final MongoCollection<Document> T_PackageBox = jmongo.collection("T_PackageBox");
 
-        System.in.read();
-//        fix(null);
+        final Bson lineMachineFilter = eq("lineMachine", "5bffa63d8857b85a437d216f");
+        final Bson codeDateFilter1 = gte("codeDate", J.date(LocalDate.of(2019, 11, 10)));
+        final Bson codeDateFilter2 = lte("codeDate", J.date(LocalDate.of(2019, 11, 12)));
+        final Bson filter = and(lineMachineFilter, codeDateFilter1, codeDateFilter2);
+        Flux.from(T_SilkBarcode.find(filter)).toStream().forEach(document -> {
+            final LocalDate codeDate = J.localDate(document.getDate("codeDate"));
+            final String doffingNum = document.getString("doffingNum");
+
+            final String silkCode = document.getString("code") + "08B";
+            final Document silkDoc = Mono.from(T_Silk.find(eq("code", silkCode))).block();
+            if (silkDoc == null) {
+                System.out.println(codeDate + "\t" + doffingNum + "\t" + silkCode + "\t" + "无");
+                return;
+            }
+            final String packageBoxId = silkDoc.getString("packageBox");
+            if (J.nonBlank(packageBoxId)) {
+                final Document packageBoxDoc = Mono.from(T_PackageBox.find(eq(ID_COL, packageBoxId))).block();
+                final String packageBoxCode = packageBoxDoc.getString("code");
+                System.out.println(codeDate + "\t" + doffingNum + "\t" + silkCode + "\t" + packageBoxCode);
+                return;
+            }
+
+            System.out.println(codeDate + "\t" + doffingNum + "\t" + silkCode + "\t" + "查丝车");
+        });
     }
 
-    private static void fixDyeingPrepare() {
-        final MongoCollection<Document> collection = jmongo.collection("T_DyeingPrepare");
-        final Bson b1 = gte("createDateTime", J.date(LocalDate.of(2019, 11, 9)));
-        final Bson b2 = lt("createDateTime", J.date(LocalDateTime.of(2019, 11, 13, 0, 0)));
-        Flux.from(collection.find(and(b1, b2)))
-                .map(Test::fixDyeingPrepare)
-                .onErrorResume(err -> Mono.just(false))
-                .doOnComplete(() -> System.out.println("fixDyeingPrepare success"))
-                .subscribe();
-    }
-
-    @SneakyThrows
-    private static boolean fixDyeingPrepare(Document document) {
-        final HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
-        final String id = document.getString(ID_COL);
-        final HttpRequest request = HttpRequest.newBuilder()
-                .header("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1aWQiOiI1YzA0YTA0NGMzY2FlODEzYjUzMGNkZDEiLCJpYXQiOjE1NDcxMjk4MzEsImlzcyI6ImphcHAtbWVzLWF1dG8iLCJzdWIiOiI1YzA0YTA0NGMzY2FlODEzYjUzMGNkZDEifQ.gO_IM7drZHaEn00kJ2a0kne3B3QrR7bcHVA5fI6ReWElMm2bOjatKogDQfYBs6l31uGTQqSzvGegtmgRsW_BRggUIwRgUEJJ99w1arueAQ_2TJQsIgFnNUoQri3uxrqxv039rKthgmwRmRVMqteJO0k-jZj9RfLARXHzqMPtmlb1j8ZQokrsTGCgouYC0uN1pq2ZhN2MYC3kPty_Rpabgq8RWmLqGAIc6436Lg9d-yEAm_UCYZcuisbjbepCNAUD3frq6qrlhRU8o8vhzYZhxoue7TI4QS-PEk0_crEK_H-Sofc9yoQqUsy9jLp2y2yHQvgpTi5ykveu2jIlitA51g")
-                .uri(URI.create("http://10.2.0.215:9998/api/dyeingPrepares/" + id + "/lucene"))
-                .PUT(HttpRequest.BodyPublishers.noBody())
-                .build();
-        final HttpResponse<Void> response = client.send(request, HttpResponse.BodyHandlers.discarding());
-        if (response.statusCode() < 300) {
-            return true;
-        }
-        System.out.println(id);
-        return false;
-    }
-
-    private static void fixPackageBox() {
-        final MongoCollection<Document> collection = jmongo.collection("T_PackageBox");
-        final Bson b1 = gte("printDate", J.date(LocalDate.of(2019, 11, 1)));
-        final Bson b2 = lt("printDate", J.date(LocalDateTime.of(2019, 11, 13, 0, 0)));
-        Flux.from(collection.find(and(b1, b2)))
-                .map(Test::fixPackageBox)
-                .onErrorResume(err -> Mono.just(false))
-                .doOnComplete(() -> System.out.println("fixPackageBox success"))
-                .subscribe();
-    }
-
-    @SneakyThrows
-    private static boolean fixPackageBox(Document document) {
-        final HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
-        final String id = document.getString(ID_COL);
-        final HttpRequest request = HttpRequest.newBuilder()
-                .header("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1aWQiOiI1YzA0YTA0NGMzY2FlODEzYjUzMGNkZDEiLCJpYXQiOjE1NDcxMjk4MzEsImlzcyI6ImphcHAtbWVzLWF1dG8iLCJzdWIiOiI1YzA0YTA0NGMzY2FlODEzYjUzMGNkZDEifQ.gO_IM7drZHaEn00kJ2a0kne3B3QrR7bcHVA5fI6ReWElMm2bOjatKogDQfYBs6l31uGTQqSzvGegtmgRsW_BRggUIwRgUEJJ99w1arueAQ_2TJQsIgFnNUoQri3uxrqxv039rKthgmwRmRVMqteJO0k-jZj9RfLARXHzqMPtmlb1j8ZQokrsTGCgouYC0uN1pq2ZhN2MYC3kPty_Rpabgq8RWmLqGAIc6436Lg9d-yEAm_UCYZcuisbjbepCNAUD3frq6qrlhRU8o8vhzYZhxoue7TI4QS-PEk0_crEK_H-Sofc9yoQqUsy9jLp2y2yHQvgpTi5ykveu2jIlitA51g")
-                .uri(URI.create("http://10.2.0.215:9998/api/packageBoxes/" + id + "/print"))
-                .PUT(HttpRequest.BodyPublishers.noBody())
-                .build();
-        final HttpResponse<Void> response = client.send(request, HttpResponse.BodyHandlers.discarding());
-        if (response.statusCode() < 300) {
-            return true;
-        }
-        System.out.println(id);
-        return false;
-    }
 
 }

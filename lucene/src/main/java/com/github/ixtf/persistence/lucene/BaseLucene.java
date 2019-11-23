@@ -11,14 +11,15 @@ import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.facet.FacetResult;
+import org.apache.lucene.facet.Facets;
+import org.apache.lucene.facet.FacetsCollector;
 import org.apache.lucene.facet.FacetsConfig;
+import org.apache.lucene.facet.taxonomy.FastTaxonomyFacetCounts;
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader;
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyWriter;
 import org.apache.lucene.index.*;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 
 import java.io.IOException;
@@ -130,4 +131,17 @@ public abstract class BaseLucene<T extends IEntity> {
         final TopDocs topDocs = searcher.search(query, first + pageSize, sort);
         return Jlucene.ids(searcher, topDocs, first);
     }
+
+    @SneakyThrows(IOException.class)
+    public Pair<Long, Collection<String>> queryFacet(BooleanQuery query, String indexFieldName) {
+        @Cleanup final IndexReader indexReader = indexReader();
+        @Cleanup final DirectoryTaxonomyReader taxoReader = taxoReader();
+        final FacetsCollector fc = new FacetsCollector();
+        final IndexSearcher searcher = new IndexSearcher(indexReader);
+        searcher.search(query, fc);
+        final Facets facets = new FastTaxonomyFacetCounts(indexFieldName, taxoReader, facetsConfig(), fc);
+        final FacetResult facetResult = facets.getTopChildren(Integer.MAX_VALUE, indexFieldName);
+        return Jlucene.ids(facetResult);
+    }
+
 }

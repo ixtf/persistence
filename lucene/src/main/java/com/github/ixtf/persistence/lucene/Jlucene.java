@@ -3,13 +3,16 @@ package com.github.ixtf.persistence.lucene;
 import com.github.ixtf.japp.core.J;
 import com.github.ixtf.persistence.IEntity;
 import com.github.ixtf.persistence.IEntityLoggable;
-import com.google.common.reflect.ClassPath;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ScanResult;
+import lombok.Cleanup;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.facet.FacetField;
+import org.apache.lucene.facet.FacetResult;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -19,7 +22,6 @@ import org.apache.lucene.search.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
-import java.lang.reflect.Modifier;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -30,7 +32,7 @@ import java.util.stream.Stream;
 
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 /**
  * @author jzb 2019-05-29
@@ -43,7 +45,7 @@ public class Jlucene {
                 .map(it -> it.scoreDocs)
                 .flatMap(Stream::of)
                 .map(it -> id(searcher, it))
-                .collect(toList());
+                .collect(toUnmodifiableList());
     }
 
     public static Pair<Long, Collection<String>> ids(IndexSearcher searcher, TopDocs topDocs, int first) {
@@ -53,8 +55,18 @@ public class Jlucene {
         final List<String> ids = Arrays.stream(topDocs.scoreDocs)
                 .skip(first)
                 .map(scoreDoc -> id(searcher, scoreDoc))
-                .collect(toList());
+                .collect(toUnmodifiableList());
         return Pair.of(topDocs.totalHits.value, ids);
+    }
+
+    public static Pair<Long, Collection<String>> ids(FacetResult facetResult) {
+        final List<String> ids = ofNullable(facetResult)
+                .map(it -> it.labelValues).stream()
+                .flatMap(Arrays::stream)
+                .map(it -> it.label)
+                .distinct()
+                .collect(toUnmodifiableList());
+        return Pair.of(Long.valueOf(ids.size()), ids);
     }
 
     @SneakyThrows(IOException.class)
@@ -77,11 +89,11 @@ public class Jlucene {
     }
 
     public static void add(@NotNull Document doc, @NotBlank String fieldName, IEntity entity) {
-        ofNullable(entity).map(IEntity::getId).ifPresent(it -> add(doc, fieldName, it));
+        ofNullable(entity).map(IEntity::getId).filter(J::nonBlank).ifPresent(it -> add(doc, fieldName, it));
     }
 
     public static void addFacet(@NotNull Document doc, @NotBlank String fieldName, IEntity entity) {
-        ofNullable(entity).map(IEntity::getId).ifPresent(it -> addFacet(doc, fieldName, it));
+        ofNullable(entity).map(IEntity::getId).filter(J::nonBlank).ifPresent(it -> addFacet(doc, fieldName, it));
     }
 
     public static void addLoggable(@NotNull Document doc, IEntityLoggable entity) {
@@ -213,17 +225,13 @@ public class Jlucene {
         return builder;
     }
 
-    @SneakyThrows(IOException.class)
-    public static Stream<? extends Class<?>> streamBaseLucene(String pkgName) {
-        return ClassPath.from(Thread.currentThread().getContextClassLoader())
-                .getTopLevelClasses(pkgName)
-                .parallelStream()
-                .map(ClassPath.ClassInfo::load)
-                .filter(BaseLucene.class::isAssignableFrom)
-                .filter(it -> {
-                    final int mod = it.getModifiers();
-                    return !Modifier.isAbstract(mod) && !Modifier.isInterface(mod);
-                })
+    public static Stream<? extends Class<?>> streamBaseLucene(String... pkgNames) {
+        @Cleanup final ScanResult scanResult = new ClassGraph().enableAllInfo()
+                .whitelistPackages(pkgNames)
+                .scan();
+        return scanResult.getSubclasses(BaseLucene.class.getName())
+                .filter(classInfo -> !classInfo.isAbstract() && !classInfo.isInterface())
+                .loadClasses().parallelStream()
                 .distinct();
     }
 }

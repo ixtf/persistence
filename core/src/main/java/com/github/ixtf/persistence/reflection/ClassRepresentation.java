@@ -1,5 +1,6 @@
 package com.github.ixtf.persistence.reflection;
 
+import javax.persistence.Cacheable;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Optional;
@@ -9,11 +10,14 @@ import java.util.Optional;
  *
  * @author jzb 2019-02-14
  */
+@Cacheable
 public interface ClassRepresentation<T> {
 
     String getTableName();
 
     Class<T> getEntityClass();
+
+    boolean isCacheable();
 
     Constructor<T> getConstructor();
 

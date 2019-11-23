@@ -3,13 +3,14 @@ package com.github.ixtf.persistence.reflection;
 import lombok.Getter;
 import lombok.ToString;
 
+import javax.persistence.Cacheable;
 import java.lang.reflect.Constructor;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 @ToString(onlyExplicitlyIncluded = true)
 class DefaultClassRepresentation<T> implements ClassRepresentation<T> {
+    @ToString.Include
     @Getter
     private final Class<T> entityClass;
     @Getter
@@ -22,13 +23,16 @@ class DefaultClassRepresentation<T> implements ClassRepresentation<T> {
     @ToString.Include
     @Getter
     private final List<FieldRepresentation> fields;
+    @Getter
+    private final boolean cacheable;
 
     DefaultClassRepresentation(String tableName, Class<T> entityClass, Constructor constructor, List<FieldRepresentation> fields) {
         this.tableName = tableName;
         this.entityClass = entityClass;
-        this.fields = Collections.unmodifiableList(fields);
+        this.fields = fields;
         this.constructor = constructor;
         this.id = fields.stream().filter(FieldRepresentation::isId).findFirst().orElse(null);
+        this.cacheable = entityClass.isAnnotationPresent(Cacheable.class);
     }
 
     @Override

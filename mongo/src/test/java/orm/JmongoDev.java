@@ -14,7 +14,7 @@ public class JmongoDev extends JmongoOptions {
     protected MongoClient client() {
         return MongoClients.create(
                 MongoClientSettings.builder()
-                        .applyConnectionString(new ConnectionString("mongodb://192.168.0.38"))
+                        .applyConnectionString(new ConnectionString("mongodb://root:tomking@192.168.0.38"))
                         .build()
         );
     }

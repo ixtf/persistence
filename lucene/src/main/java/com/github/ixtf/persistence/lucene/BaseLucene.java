@@ -109,11 +109,13 @@ public abstract class BaseLucene<T extends IEntity> {
     }
 
     @SneakyThrows(IOException.class)
-    public Pair<Long, Collection<String>> query(Query query, int first, int pageSize) {
+    public Pair<Integer, Collection<String>> query(Query query, int first, int pageSize) {
         @Cleanup final IndexReader indexReader = indexReader();
         final IndexSearcher searcher = new IndexSearcher(indexReader);
+        final TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
+        searcher.search(query, totalHitCountCollector);
         final TopDocs topDocs = searcher.search(query, first + pageSize);
-        return Jlucene.ids(searcher, topDocs, first);
+        return Jlucene.ids(searcher, totalHitCountCollector, topDocs, first);
     }
 
     @SneakyThrows(IOException.class)
@@ -125,11 +127,13 @@ public abstract class BaseLucene<T extends IEntity> {
     }
 
     @SneakyThrows(IOException.class)
-    public Pair<Long, Collection<String>> query(Query query, Sort sort, int first, int pageSize) {
+    public Pair<Integer, Collection<String>> query(Query query, Sort sort, int first, int pageSize) {
         @Cleanup final IndexReader indexReader = indexReader();
         final IndexSearcher searcher = new IndexSearcher(indexReader);
+        final TotalHitCountCollector totalHitCountCollector = new TotalHitCountCollector();
+        searcher.search(query, totalHitCountCollector);
         final TopDocs topDocs = searcher.search(query, first + pageSize, sort);
-        return Jlucene.ids(searcher, topDocs, first);
+        return Jlucene.ids(searcher, totalHitCountCollector, topDocs, first);
     }
 
     @SneakyThrows(IOException.class)

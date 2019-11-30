@@ -29,8 +29,8 @@ public class Test {
         final MongoCollection<Document> T_PackageBox = jmongo.collection("T_PackageBox");
 
         final Bson lineMachineFilter = eq("lineMachine", "5bffa63d8857b85a437d216f");
-        final Bson codeDateFilter1 = gte("codeDate", J.date(LocalDate.of(2019, 11, 10)));
-        final Bson codeDateFilter2 = lte("codeDate", J.date(LocalDate.of(2019, 11, 12)));
+        final Bson codeDateFilter1 = gte("codeDate", J.date(LocalDate.of(2019, 11, 13)));
+        final Bson codeDateFilter2 = lte("codeDate", J.date(LocalDate.of(2019, 11, 18)));
         final Bson filter = and(lineMachineFilter, codeDateFilter1, codeDateFilter2);
         Flux.from(T_SilkBarcode.find(filter)).toStream().forEach(document -> {
             final LocalDate codeDate = J.localDate(document.getDate("codeDate"));

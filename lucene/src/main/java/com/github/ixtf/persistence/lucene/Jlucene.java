@@ -48,15 +48,16 @@ public class Jlucene {
                 .collect(toUnmodifiableList());
     }
 
-    public static Pair<Long, Collection<String>> ids(IndexSearcher searcher, TopDocs topDocs, int first) {
-        if (topDocs.totalHits.value < 1) {
-            return Pair.of(topDocs.totalHits.value, EMPTY_LIST);
+    public static Pair<Integer, Collection<String>> ids(IndexSearcher searcher, TotalHitCountCollector totalHitCountCollector, TopDocs topDocs, int first) {
+        final int totalHits = totalHitCountCollector.getTotalHits();
+        if (totalHits < 1) {
+            return Pair.of(totalHits, EMPTY_LIST);
         }
         final List<String> ids = Arrays.stream(topDocs.scoreDocs)
                 .skip(first)
                 .map(scoreDoc -> id(searcher, scoreDoc))
                 .collect(toUnmodifiableList());
-        return Pair.of(topDocs.totalHits.value, ids);
+        return Pair.of(totalHits, ids);
     }
 
     public static Pair<Long, Collection<String>> ids(FacetResult facetResult) {

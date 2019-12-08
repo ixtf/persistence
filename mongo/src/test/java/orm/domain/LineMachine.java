@@ -7,6 +7,7 @@ import lombok.ToString;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -22,6 +23,7 @@ public class LineMachine implements Serializable {
     @Setter
     @ToString.Include
     @Column
+    @NotNull
     private Line line;
     /**
      * 机台位号
@@ -31,4 +33,7 @@ public class LineMachine implements Serializable {
     @ToString.Include
     @Column
     private int item;
+    @Getter
+    @Setter
+    private int spindleNum;
 }

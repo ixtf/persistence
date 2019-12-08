@@ -32,6 +32,9 @@ public final class ClassRepresentations {
                     if (idAnnotation != null) {
                         return true;
                     }
+                    if (Modifier.isStatic(field.getModifiers())) {
+                        return false;
+                    }
                     final Transient transientAnnotation = field.getAnnotation(Transient.class);
                     return transientAnnotation == null;
                 })

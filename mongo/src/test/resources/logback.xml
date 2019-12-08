@@ -10,9 +10,9 @@
         </encoder>
     </appender>
 
-    <logger name="com.github.ixtf.persistence" level="debug">
-        <appender-ref ref="STDOUT"/>
-    </logger>
+    <!--    <logger name="com.github.ixtf.persistence" level="debug">-->
+    <!--        <appender-ref ref="STDOUT"/>-->
+    <!--    </logger>-->
     <root level="info">
         <appender-ref ref="STDOUT"/>
     </root>

@@ -5,22 +5,12 @@ import com.github.ixtf.persistence.IEntity;
 import com.github.ixtf.persistence.mongo.Jmongo;
 import lombok.Data;
 import lombok.ToString;
-import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.implementation.MethodDelegation;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import org.bson.Document;
 import orm.JmongoDev;
-import reactor.core.publisher.Mono;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.Callable;
-
-import static com.github.ixtf.persistence.mongo.Jmongo.ID_COL;
-import static com.mongodb.client.model.Filters.eq;
-import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * @author jzb 2019-11-25
@@ -29,24 +19,24 @@ public class ByteBuddyTest {
     private static final Jmongo jmongo = Jmongo.of(JmongoDev.class);
 
     public static void main(String[] args) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        final Class<? extends Test> TestProxyClass = new ByteBuddy().subclass(Test.class)
-                .defineField("document", Document.class)
-                .method(named("getName")).intercept(MethodDelegation.to(GetIdInterceptor.class))
-                .make()
-                .load(ByteBuddyTest.class.getClassLoader())
-                .getLoaded();
-
-        final Document document = Mono.from(jmongo.collection("T_Test").find(eq(ID_COL, "1"))).block();
-        final Test test = TestProxyClass.getDeclaredConstructor().newInstance();
-        System.out.println(test.getId());
-
-        final Class<?> loaded = new ByteBuddy().subclass(Object.class)
-                .name("example.Type")
-                .make()
-                .load(ByteBuddyTest.class.getClassLoader())
-                .getLoaded();
-        final Object o = loaded.getDeclaredConstructor().newInstance();
-        System.out.println(o.getClass().getName());
+//        final Class<? extends Test> TestProxyClass = new ByteBuddy().subclass(Test.class)
+//                .defineField("document", Document.class)
+//                .method(named("getName")).intercept(MethodDelegation.to(GetIdInterceptor.class))
+//                .make()
+//                .load(ByteBuddyTest.class.getClassLoader())
+//                .getLoaded();
+//
+//        final Document document = Mono.from(jmongo.collection("T_Test").find(eq(ID_COL, "1"))).block();
+//        final Test test = TestProxyClass.getDeclaredConstructor().newInstance();
+//        System.out.println(test.getId());
+//
+//        final Class<?> loaded = new ByteBuddy().subclass(Object.class)
+//                .name("example.Type")
+//                .make()
+//                .load(ByteBuddyTest.class.getClassLoader())
+//                .getLoaded();
+//        final Object o = loaded.getDeclaredConstructor().newInstance();
+//        System.out.println(o.getClass().getName());
 
 //        TypePool typePool = TypePool.Default.ofSystemLoader();
 //        final Class<?> testClass = new ByteBuddy()
@@ -66,7 +56,7 @@ public class ByteBuddyTest {
 //                .load(ByteBuddyTest.class.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent())
 //                .getLoaded();
 //        final CacheTest.Test test = jmongo.find(testClass, "1").block();
-        System.out.println(test);
+//        System.out.println(test);
     }
 
     @ToString(onlyExplicitlyIncluded = true)
@@ -81,22 +71,22 @@ public class ByteBuddyTest {
     }
 
     public static class GetIdInterceptor {
-        public String getId(@SuperCall Callable<String> zuper)
-                throws Exception {
-            try {
-                return zuper.call();
-            } finally {
-                System.out.println("Returned from database");
-            }
-        }
-
-        public String getName(@SuperCall Callable<String> zuper)
-                throws Exception {
-            try {
-                return zuper.call();
-            } finally {
-                System.out.println("Returned from database");
-            }
-        }
+//        public String getId(@SuperCall Callable<String> zuper)
+//                throws Exception {
+//            try {
+//                return zuper.call();
+//            } finally {
+//                System.out.println("Returned from database");
+//            }
+//        }
+//
+//        public String getName(@SuperCall Callable<String> zuper)
+//                throws Exception {
+//            try {
+//                return zuper.call();
+//            } finally {
+//                System.out.println("Returned from database");
+//            }
+//        }
     }
 }

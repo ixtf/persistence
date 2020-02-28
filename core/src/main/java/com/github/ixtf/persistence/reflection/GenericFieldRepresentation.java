@@ -7,6 +7,7 @@ import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -27,9 +28,18 @@ public class GenericFieldRepresentation extends AbstractFieldRepresentation {
         super(type, name, field, converter);
         parameterizedType = ParameterizedType.class.cast(getNativeField().getGenericType());
         rawType = Class.class.cast(parameterizedType.getRawType());
-        elementType = Class.class.cast(parameterizedType.getActualTypeArguments()[0]);
+        // fixme Set<TreeSet<elementType>> 情况下会报错
+        elementType = getActualType(parameterizedType.getActualTypeArguments()[0]);
         entityField = elementType.getAnnotation(Entity.class) != null;
         embeddableField = elementType.getAnnotation(Embeddable.class) != null;
+    }
+
+    private Class getActualType(Type type) {
+        if (type instanceof ParameterizedType) {
+            final ParameterizedType pType = (ParameterizedType) type;
+            return getActualType(pType.getActualTypeArguments()[0]);
+        }
+        return Class.class.cast(type);
     }
 
     @Override
@@ -46,6 +56,14 @@ public class GenericFieldRepresentation extends AbstractFieldRepresentation {
         } else if (NavigableSet.class.equals(type) || SortedSet.class.equals(type)) {
             return Collectors.toCollection(TreeSet::new);
         } else if (Set.class.isAssignableFrom(type)) {
+            final Type genericType = getNativeField().getGenericType();
+            if (genericType instanceof ParameterizedType) {
+                final ParameterizedType parameterizedType = (ParameterizedType) genericType;
+                final Type subType = parameterizedType.getActualTypeArguments()[0];
+                if (subType instanceof TreeSet) {
+
+                }
+            }
             return Collectors.toCollection(HashSet::new);
         }
         throw new UnsupportedOperationException("This collection is not supported yet: " + type);

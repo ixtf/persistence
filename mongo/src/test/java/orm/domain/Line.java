@@ -82,7 +82,7 @@ public class Line implements EntityLoggable {
     @PostPersist
     @PostUpdate
     private void test() {
-        System.out.println("@PrePersist @PreUpdate Test");
+        System.out.println("@PrePersist @PreUpdate " + this.getClass().getSimpleName() + " Test");
     }
 
 }

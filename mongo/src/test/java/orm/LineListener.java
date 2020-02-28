@@ -12,7 +12,7 @@ public class LineListener {
     @PostPersist
     @PostUpdate
     private void test(IEntity line) {
-        System.out.println("@PostPersist @PostUpdate LineListener Test");
+        System.out.println("@PostPersist @PostUpdate " + this.getClass().getSimpleName() + " Test");
     }
 
 }

@@ -1,6 +1,5 @@
 package orm;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.ixtf.persistence.mongo.Jmongo;
 import com.github.ixtf.persistence.mongo.MongoUnitOfWork;
 import com.google.common.collect.Lists;
@@ -9,8 +8,6 @@ import orm.domain.*;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
-
-import static com.github.ixtf.japp.core.Constant.MAPPER;
 
 /**
  * @author jzb 2019-02-14
@@ -63,20 +60,20 @@ public class OrmTest {
 
     @SneakyThrows
     private static void readTest() {
-        final Optional<SilkCar> silkCar = jmongo.find(SilkCar.class, "5bfd4b4f67e7ad00013055df").blockOptional();
-        ObjectNode objectNode = silkCar.map(it -> MAPPER.convertValue(it, ObjectNode.class))
-                .orElseGet(MAPPER::createObjectNode);
-        System.out.println(objectNode);
-
-        final Optional<Silk> silk = jmongo.find(Silk.class, "5bfde010d939c400019343eb").blockOptional();
-        objectNode = silk.map(it -> MAPPER.convertValue(it, ObjectNode.class))
-                .orElseGet(MAPPER::createObjectNode);
-        System.out.println(objectNode);
-
-        final Optional<SilkCarRecord> silkCarRecord = jmongo.find(SilkCarRecord.class, "5bfde010d939c40001934416").blockOptional();
-        objectNode = silkCarRecord.map(it -> MAPPER.convertValue(it, ObjectNode.class))
-                .orElseGet(MAPPER::createObjectNode);
-        System.out.println(objectNode);
+//        final Optional<SilkCar> silkCar = jmongo.find(SilkCar.class, "5bfd4b4f67e7ad00013055df").blockOptional();
+//        ObjectNode objectNode = silkCar.map(it -> MAPPER.convertValue(it, ObjectNode.class))
+//                .orElseGet(MAPPER::createObjectNode);
+//        System.out.println(objectNode);
+//
+//        final Optional<Silk> silk = jmongo.find(Silk.class, "5bfde010d939c400019343eb").blockOptional();
+//        objectNode = silk.map(it -> MAPPER.convertValue(it, ObjectNode.class))
+//                .orElseGet(MAPPER::createObjectNode);
+//        System.out.println(objectNode);
+//
+//        final Optional<SilkCarRecord> silkCarRecord = jmongo.find(SilkCarRecord.class, "5bfde010d939c40001934416").blockOptional();
+//        objectNode = silkCarRecord.map(it -> MAPPER.convertValue(it, ObjectNode.class))
+//                .orElseGet(MAPPER::createObjectNode);
+//        System.out.println(objectNode);
     }
 
 }

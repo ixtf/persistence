@@ -1,57 +1,46 @@
 package init;
 
-import com.github.ixtf.japp.core.J;
 import com.github.ixtf.persistence.mongo.Jmongo;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import com.mongodb.reactivestreams.client.Success;
 import lombok.SneakyThrows;
 import org.bson.Document;
-import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 import orm.Jmongo3000;
-import reactor.core.publisher.Flux;
+import orm.domain.LineMachine;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.IntStream;
 
 import static com.github.ixtf.persistence.mongo.Jmongo.ID_COL;
-import static com.mongodb.client.model.Filters.*;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author jzb 2019-05-16
  */
 public class Test {
-    //        private static final Jmongo jmongo = Jmongo.of(JmongoDev.class);
+    //    private static final Jmongo jmongo = Jmongo.of(JmongoDev.class);
     private static final Jmongo jmongo = Jmongo.of(Jmongo3000.class);
 
     @SneakyThrows
     public static void main(String[] args) {
-        final MongoCollection<Document> T_SilkBarcode = jmongo.collection("T_SilkBarcode");
-        final MongoCollection<Document> T_Silk = jmongo.collection("T_Silk");
-        final MongoCollection<Document> T_PackageBox = jmongo.collection("T_PackageBox");
-
-        final Bson lineMachineFilter = eq("lineMachine", "5bffa63d8857b85a437d216f");
-        final Bson codeDateFilter1 = gte("codeDate", J.date(LocalDate.of(2019, 11, 13)));
-        final Bson codeDateFilter2 = lte("codeDate", J.date(LocalDate.of(2019, 11, 18)));
-        final Bson filter = and(lineMachineFilter, codeDateFilter1, codeDateFilter2);
-        Flux.from(T_SilkBarcode.find(filter)).toStream().forEach(document -> {
-            final LocalDate codeDate = J.localDate(document.getDate("codeDate"));
-            final String doffingNum = document.getString("doffingNum");
-
-            final String silkCode = document.getString("code") + "08B";
-            final Document silkDoc = Mono.from(T_Silk.find(eq("code", silkCode))).block();
-            if (silkDoc == null) {
-                System.out.println(codeDate + "\t" + doffingNum + "\t" + silkCode + "\t" + "无");
-                return;
-            }
-            final String packageBoxId = silkDoc.getString("packageBox");
-            if (J.nonBlank(packageBoxId)) {
-                final Document packageBoxDoc = Mono.from(T_PackageBox.find(eq(ID_COL, packageBoxId))).block();
-                final String packageBoxCode = packageBoxDoc.getString("code");
-                System.out.println(codeDate + "\t" + doffingNum + "\t" + silkCode + "\t" + packageBoxCode);
-                return;
-            }
-
-            System.out.println(codeDate + "\t" + doffingNum + "\t" + silkCode + "\t" + "查丝车");
-        });
+        final MongoCollection<Document> T_LineMachine = jmongo.collection(LineMachine.class);
+        final List<Integer> spindleSeq = List.of(1, 2, 3, 4, 5, 6);
+        final Date date = new Date();
+        final List<Document> documents = IntStream.range(1, 48).mapToObj(item -> new Document()
+                .append(ID_COL, ObjectId.get().toHexString())
+                .append("item", item)
+                .append("spindleSeq", spindleSeq)
+                .append("spindleNum", 6)
+                .append("line", "5e58c76af7cee300019f209a")
+                .append("creator", "5bffc7e58857b84a917c62ee")
+                .append("modifier", "5bffc7e58857b84a917c62ee")
+                .append("cdt", date)
+                .append("mdt", date)).collect(toList());
+        final Success success = Mono.from(T_LineMachine.insertMany(documents)).block();
+        System.out.println(success);
     }
 
 

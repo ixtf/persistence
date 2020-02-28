@@ -30,6 +30,9 @@ public final class ValueWriterDecorator implements ValueWriter {
 
     @Override
     public Object write(Object object) {
+        if (object == null) {
+            return null;
+        }
         Class clazz = object.getClass();
         ValueWriter valueWriter = writers.stream().filter(r -> r.isCompatible(clazz)).findFirst()
                 .orElseThrow(() -> new UnsupportedOperationException("类型[" + clazz + "]不支持"));

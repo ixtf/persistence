@@ -2,7 +2,6 @@ package com.github.ixtf.persistence.redis;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import lombok.SneakyThrows;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -33,7 +32,6 @@ public abstract class Jredis {
         };
     });
 
-    @SneakyThrows
     public static Jredis of(Class<? extends JredisOptions> clazz) {
         return CACHE.get(clazz);
     }

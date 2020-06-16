@@ -120,6 +120,10 @@ public class Jlucene {
         ofNullable(e).map(Enum::name).ifPresent(it -> add(doc, fieldName, it));
     }
 
+    public static void add(@NotNull Document doc, @NotBlank String fieldName, Enum e, Field.Store store) {
+        ofNullable(e).map(Enum::name).ifPresent(it -> add(doc, fieldName, it, store));
+    }
+
     public static void addFacet(@NotNull Document doc, @NotBlank String fieldName, Enum e) {
         ofNullable(e).map(Enum::name).ifPresent(it -> addFacet(doc, fieldName, it));
     }

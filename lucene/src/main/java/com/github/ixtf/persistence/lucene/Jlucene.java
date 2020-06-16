@@ -108,6 +108,10 @@ public class Jlucene {
         doc.add(new IntPoint(fieldName, b ? 1 : 0));
     }
 
+    public static void add(@NotNull Document doc, @NotBlank String fieldName, long l) {
+        doc.add(new LongPoint(fieldName, l));
+    }
+
     public static void add(@NotNull Document doc, @NotBlank String fieldName, double d) {
         doc.add(new DoublePoint(fieldName, d));
     }

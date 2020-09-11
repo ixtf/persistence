@@ -68,9 +68,12 @@ public class DocumentEntityConverter extends AbstractEntityConverter {
 
     @Override
     protected Object convertToEntityAttribute_Collection_Entity(Object entity, GenericFieldRepresentation fieldRepresentation, Iterable iterable) {
-        final Object itemValue = IterableUtils.get(iterable, 0);
+        if (IterableUtils.isEmpty(iterable)) {
+            return null;
+        }
         final Class elementType = fieldRepresentation.getElementType();
         final Collector collector = fieldRepresentation.getCollector();
+        final Object itemValue = IterableUtils.get(iterable, 0);
         if (itemValue instanceof String || itemValue instanceof ObjectId) {
             final LazyLoader lazyLoader = () -> {
                 log.debug("lazyLoaderEntity_Collection[" + entity.getClass().getSimpleName() + "." + fieldRepresentation.getFieldName() + "]");
@@ -88,6 +91,9 @@ public class DocumentEntityConverter extends AbstractEntityConverter {
 
     @Override
     protected Object convertToDatabaseColumn_Collection(Object entity, GenericFieldRepresentation fieldRepresentation, Iterable iterable) {
+        if (IterableUtils.isEmpty(iterable)) {
+            return null;
+        }
         final Function function;
         if (fieldRepresentation.isEntityField()) {
             final ClassRepresentation<?> elementClassRepresentation = ClassRepresentations.create(fieldRepresentation.getElementType());

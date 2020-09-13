@@ -29,9 +29,9 @@ public abstract class Jmongo {
     public static final String ID_COL = "_id";
     private final EntityConverter entityConverter;
     private static final LoadingCache<Class<? extends JmongoOptions>, Jmongo> CACHE = Caffeine.newBuilder().build(clazz -> {
-        final JmongoOptions options = clazz.getDeclaredConstructor().newInstance();
-        final MongoClient client = options.client();
-        final String dbName = options.dbName();
+        final var options = clazz.getDeclaredConstructor().newInstance();
+        final var client = options.client();
+        final var dbName = options.dbName();
         return new Jmongo() {
             @Override
             public MongoClient client() {
@@ -73,7 +73,7 @@ public abstract class Jmongo {
         if (entityCache == null) {
             return false;
         }
-        final ClassRepresentation<?> classRepresentation = ClassRepresentations.create(entityClass);
+        final var classRepresentation = ClassRepresentations.create(entityClass);
         return classRepresentation.isCacheable();
     }
 
@@ -90,7 +90,7 @@ public abstract class Jmongo {
     }
 
     public MongoCollection<Document> collection(Class entityClass) {
-        final ClassRepresentation classRepresentation = ClassRepresentations.create(entityClass);
+        final var classRepresentation = ClassRepresentations.create(entityClass);
         return collection(classRepresentation.getTableName());
     }
 
@@ -103,7 +103,7 @@ public abstract class Jmongo {
     }
 
     public <T> Mono<T> find(Class<T> entityClass, Object id) {
-        final ClassRepresentation<T> classRepresentation = ClassRepresentations.create(entityClass);
+        final var classRepresentation = ClassRepresentations.create(entityClass);
         if (isCacheable(entityClass)) {
             final Pair<Class<?>, Object> key = Pair.of(classRepresentation.getEntityClass(), id);
             return Mono.fromCallable(() -> entityCache.get(key)).cast(entityClass);
@@ -114,9 +114,7 @@ public abstract class Jmongo {
     public void refresh(Class<?> entityClass, Object id) {
         if (isCacheable(entityClass)) {
             final Pair<Class<?>, Object> key = Pair.of(entityClass, id);
-//            entityCache.refresh(key);
-
-            final Object ifPresent = entityCache.getIfPresent(key);
+            final var ifPresent = entityCache.getIfPresent(key);
             if (ifPresent != null) {
                 Mono.from(collection(entityClass).find(eq(ID_COL, id))).subscribe(it -> {
                     entityConverter.fillEntity(ifPresent, it);
@@ -173,9 +171,9 @@ public abstract class Jmongo {
 
     @SneakyThrows
     public Mono<Boolean> exists(Object entity) {
-        final ClassRepresentation<?> classRepresentation = ClassRepresentations.create(entity);
-        final String idFieldName = classRepresentation.getId().map(FieldRepresentation::getFieldName).get();
-        final Object id = PropertyUtils.getProperty(entity, idFieldName);
+        final var classRepresentation = ClassRepresentations.create(entity);
+        final var idFieldName = classRepresentation.getId().map(FieldRepresentation::getFieldName).get();
+        final var id = PropertyUtils.getProperty(entity, idFieldName);
         return exists(entity.getClass(), id);
     }
 

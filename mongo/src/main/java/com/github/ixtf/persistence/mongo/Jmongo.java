@@ -27,7 +27,6 @@ import static java.util.Optional.ofNullable;
  */
 public abstract class Jmongo {
     public static final String ID_COL = "_id";
-    private final EntityConverter entityConverter;
     private static final LoadingCache<Class<? extends JmongoOptions>, Jmongo> CACHE = Caffeine.newBuilder().build(clazz -> {
         final var options = clazz.getDeclaredConstructor().newInstance();
         final var client = options.client();
@@ -50,6 +49,7 @@ public abstract class Jmongo {
         };
     });
     private final LoadingCache<Pair<Class<?>, Object>, Object> entityCache;
+    private final EntityConverter entityConverter;
 
     private Jmongo() {
         entityConverter = DocumentEntityConverter.get(this);

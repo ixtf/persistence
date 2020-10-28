@@ -19,6 +19,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.Principal;
+import java.util.Optional;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -182,6 +183,14 @@ public abstract class Jmongo {
         return Flux.from(collection(entityClass).find(condition).skip(skip).limit(limit)).map(it -> entityConverter.toEntity(entityClass, it));
     }
 
+    public <T> Flux<T> query(Class<T> entityClass, Optional<Bson> filterOpt) {
+        return filterOpt.map(filter -> query(entityClass, filter)).orElseGet(() -> query(entityClass));
+    }
+
+    public <T> Flux<T> query(Class<T> entityClass, Optional<Bson> filterOpt, int skip, int limit) {
+        return filterOpt.map(filter -> query(entityClass, filter, skip, limit)).orElseGet(() -> query(entityClass, skip, limit));
+    }
+
     public Mono<Long> count(Class<?> entityClass) {
         final var condition = eq("deleted", false);
         return Mono.from(collection(entityClass).countDocuments(condition));
@@ -191,6 +200,10 @@ public abstract class Jmongo {
         final var deletedFilter = eq("deleted", false);
         final var condition = and(filter, deletedFilter);
         return Mono.from(collection(entityClass).countDocuments(condition));
+    }
+
+    public Mono<Long> count(Class<?> entityClass, Optional<Bson> filterOpt) {
+        return filterOpt.map(filter -> count(entityClass, filter)).orElseGet(() -> count(entityClass));
     }
 
     public Mono<Boolean> exists(Class<?> entityClass, Object id) {

@@ -30,6 +30,7 @@ import static java.util.Optional.ofNullable;
  */
 public abstract class Jmongo {
     public static final String ID_COL = "_id";
+    public static final String DELETED_COL = "deleted";
     private static final LoadingCache<Class<? extends JmongoOptions>, Jmongo> CACHE = Caffeine.newBuilder().build(clazz -> {
         final var options = clazz.getDeclaredConstructor().newInstance();
         final var client = options.client();
@@ -161,24 +162,24 @@ public abstract class Jmongo {
 
     // 查询所有
     public <T> Flux<T> query(Class<T> entityClass) {
-        final var condition = eq("deleted", false);
+        final var condition = eq(DELETED_COL, false);
         return Flux.from(collection(entityClass).find(condition)).map(it -> entityConverter.toEntity(entityClass, it));
     }
 
     public <T> Flux<T> query(Class<T> entityClass, int skip, int limit) {
-        final var condition = eq("deleted", false);
+        final var condition = eq(DELETED_COL, false);
         return Flux.from(collection(entityClass).find(condition).skip(skip).limit(limit)).map(it -> entityConverter.toEntity(entityClass, it));
     }
 
     // 按条件查询
     public <T> Flux<T> query(Class<T> entityClass, Bson filter) {
-        final var deletedFilter = eq("deleted", false);
+        final var deletedFilter = eq(DELETED_COL, false);
         final var condition = and(filter, deletedFilter);
         return Flux.from(collection(entityClass).find(condition)).map(it -> entityConverter.toEntity(entityClass, it));
     }
 
     public <T> Flux<T> query(Class<T> entityClass, Bson filter, int skip, int limit) {
-        final var deletedFilter = eq("deleted", false);
+        final var deletedFilter = eq(DELETED_COL, false);
         final var condition = and(filter, deletedFilter);
         return Flux.from(collection(entityClass).find(condition).skip(skip).limit(limit)).map(it -> entityConverter.toEntity(entityClass, it));
     }
@@ -192,12 +193,12 @@ public abstract class Jmongo {
     }
 
     public Mono<Long> count(Class<?> entityClass) {
-        final var condition = eq("deleted", false);
+        final var condition = eq(DELETED_COL, false);
         return Mono.from(collection(entityClass).countDocuments(condition));
     }
 
     public Mono<Long> count(Class<?> entityClass, Bson filter) {
-        final var deletedFilter = eq("deleted", false);
+        final var deletedFilter = eq(DELETED_COL, false);
         final var condition = and(filter, deletedFilter);
         return Mono.from(collection(entityClass).countDocuments(condition));
     }

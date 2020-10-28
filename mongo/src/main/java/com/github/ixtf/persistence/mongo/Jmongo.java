@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.ixtf.persistence.EntityDTO;
 import com.github.ixtf.persistence.api.EntityConverter;
-import com.github.ixtf.persistence.reflection.ClassRepresentation;
 import com.github.ixtf.persistence.reflection.ClassRepresentations;
 import com.github.ixtf.persistence.reflection.FieldRepresentation;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -19,6 +18,9 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.security.Principal;
+
+import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static java.util.Optional.ofNullable;
 
@@ -130,43 +132,70 @@ public abstract class Jmongo {
                 .orElseGet(Mono::empty);
     }
 
+    public <T> Mono<T> find(Class<T> entityClass, Principal principal) {
+        return ofNullable(principal).map(Principal::getName)
+                .map(id -> find(entityClass, id))
+                .orElseGet(Mono::empty);
+    }
+
     public <T> Flux<T> find(Class<T> entityClass, Publisher ids) {
         return Flux.from(ids).flatMap(id -> find(entityClass, id));
     }
 
     // 按条件查询
     public <T> Mono<T> find(Class<T> entityClass, Bson filter) {
-        return Mono.from(query(entityClass, filter, 0, 1));
+        return Flux.from(collection(entityClass).find(filter))
+                .map(it -> entityConverter.toEntity(entityClass, it))
+                .collectList()
+                .flatMap(list -> {
+                    if (list.size() == 1) {
+                        return Mono.just(list.get(0));
+                    } else if (list.size() < 1) {
+                        return Mono.empty();
+                    } else {
+                        return Mono.error(new RuntimeException("多值返回"));
+                    }
+                });
     }
 
     // 查询所有
     public <T> Flux<T> query(Class<T> entityClass) {
-        return Flux.from(collection(entityClass).find()).map(it -> entityConverter.toEntity(entityClass, it));
+        final var condition = eq("deleted", false);
+        return Flux.from(collection(entityClass).find(condition)).map(it -> entityConverter.toEntity(entityClass, it));
     }
 
     public <T> Flux<T> query(Class<T> entityClass, int skip, int limit) {
-        return Flux.from(collection(entityClass).find().skip(skip).limit(limit)).map(it -> entityConverter.toEntity(entityClass, it));
+        final var condition = eq("deleted", false);
+        return Flux.from(collection(entityClass).find(condition).skip(skip).limit(limit)).map(it -> entityConverter.toEntity(entityClass, it));
     }
 
     // 按条件查询
     public <T> Flux<T> query(Class<T> entityClass, Bson filter) {
-        return Flux.from(collection(entityClass).find(filter)).map(it -> entityConverter.toEntity(entityClass, it));
+        final var deletedFilter = eq("deleted", false);
+        final var condition = and(filter, deletedFilter);
+        return Flux.from(collection(entityClass).find(condition)).map(it -> entityConverter.toEntity(entityClass, it));
     }
 
     public <T> Flux<T> query(Class<T> entityClass, Bson filter, int skip, int limit) {
-        return Flux.from(collection(entityClass).find(filter).skip(skip).limit(limit)).map(it -> entityConverter.toEntity(entityClass, it));
+        final var deletedFilter = eq("deleted", false);
+        final var condition = and(filter, deletedFilter);
+        return Flux.from(collection(entityClass).find(condition).skip(skip).limit(limit)).map(it -> entityConverter.toEntity(entityClass, it));
     }
 
     public Mono<Long> count(Class<?> entityClass) {
-        return Mono.from(collection(entityClass).countDocuments());
+        final var condition = eq("deleted", false);
+        return Mono.from(collection(entityClass).countDocuments(condition));
     }
 
     public Mono<Long> count(Class<?> entityClass, Bson filter) {
-        return Mono.from(collection(entityClass).countDocuments(filter));
+        final var deletedFilter = eq("deleted", false);
+        final var condition = and(filter, deletedFilter);
+        return Mono.from(collection(entityClass).countDocuments(condition));
     }
 
     public Mono<Boolean> exists(Class<?> entityClass, Object id) {
-        return count(entityClass, eq(ID_COL, id)).map(it -> it > 0);
+        final var condition = eq(ID_COL, id);
+        return Mono.from(collection(entityClass).countDocuments(condition)).map(it -> it > 0);
     }
 
     @SneakyThrows

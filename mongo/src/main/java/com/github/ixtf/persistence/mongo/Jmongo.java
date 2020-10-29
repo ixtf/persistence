@@ -102,10 +102,6 @@ public abstract class Jmongo {
         return new MongoUnitOfWork(this);
     }
 
-    public <T> Flux<T> find(Class<T> entityClass) {
-        return Flux.from(collection(entityClass).find()).map(it -> entityConverter.toEntity(entityClass, it));
-    }
-
     public <T> Mono<T> find(Class<T> entityClass, Object id) {
         final var classRepresentation = ClassRepresentations.create(entityClass);
         if (isCacheable(entityClass)) {

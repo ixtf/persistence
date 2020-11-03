@@ -140,7 +140,14 @@ public abstract class Jmongo {
         return Flux.from(ids).flatMap(id -> find(entityClass, id));
     }
 
-    // 按条件查询
+    /**
+     * 查询单条数据
+     *
+     * @param entityClass
+     * @param filter      注意过滤条件，必须唯一或无数据，不然会报错
+     * @param <T>
+     * @return
+     */
     public <T> Mono<T> find(Class<T> entityClass, Bson filter) {
         return Flux.from(collection(entityClass).find(filter))
                 .map(it -> entityConverter.toEntity(entityClass, it))

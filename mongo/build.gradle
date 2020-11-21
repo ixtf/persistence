@@ -1,7 +1,7 @@
 dependencies {
     compile project(":core"),
-            "net.bytebuddy:byte-buddy:1.10.18",
-            "net.bytebuddy:byte-buddy-agent:1.10.18",
+            "net.bytebuddy:byte-buddy",
+            "net.bytebuddy:byte-buddy-agent",
             "org.mongodb:mongodb-driver-reactivestreams:4.1.1"
 
     testCompile 'com.github.ixtf.japp:poi'

@@ -10,7 +10,6 @@ import javax.validation.constraints.NotNull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.List;
 import java.util.stream.Stream;
 
 import static java.util.Objects.nonNull;
@@ -23,9 +22,9 @@ import static java.util.stream.Collectors.toUnmodifiableList;
  */
 public final class ClassRepresentations {
     private static final LoadingCache<Class, ClassRepresentation> cache = Caffeine.newBuilder().build(entityClass -> {
-        final Constructor constructor = makeAccessible(entityClass);
-        final String tableName = tableName(entityClass);
-        final List<FieldRepresentation> fields = FieldUtils.getAllFieldsList(entityClass)
+        final var constructor = makeAccessible(entityClass);
+        final var tableName = tableName(entityClass);
+        final var fields = FieldUtils.getAllFieldsList(entityClass)
                 .parallelStream()
                 .filter(field -> {
                     final Id idAnnotation = field.getAnnotation(Id.class);
@@ -43,7 +42,7 @@ public final class ClassRepresentations {
         return new DefaultClassRepresentation(tableName, entityClass, constructor, fields);
     });
     private static final LoadingCache<Class<? extends AttributeConverter>, AttributeConverter> converterCache = Caffeine.newBuilder().build(clazz -> {
-        final Constructor constructor = makeAccessible(clazz);
+        final var constructor = makeAccessible(clazz);
         return (AttributeConverter) constructor.newInstance();
     });
 
@@ -56,17 +55,17 @@ public final class ClassRepresentations {
     }
 
     private static FieldRepresentation to(Field field) {
-        final FieldType fieldType = FieldType.of(field);
-        final Id idAnnotation = field.getAnnotation(Id.class);
-        final Column columnAnnotation = field.getAnnotation(Column.class);
-        final boolean id = idAnnotation != null;
-        final String columnName = id ? null : ofNullable(columnAnnotation).map(Column::name).filter(J::nonBlank).orElseGet(field::getName);
-        final FieldRepresentationBuilder builder = FieldRepresentation.builder()
+        final var fieldType = FieldType.of(field);
+        final var idAnnotation = field.getAnnotation(Id.class);
+        final var columnAnnotation = field.getAnnotation(Column.class);
+        final var id = idAnnotation != null;
+        final var columnName = id ? null : ofNullable(columnAnnotation).map(Column::name).filter(J::nonBlank).orElseGet(field::getName);
+        final var builder = FieldRepresentation.builder()
                 .withId(id)
                 .withColName(columnName)
                 .withField(field)
                 .withType(fieldType);
-        final Convert convert = field.getAnnotation(Convert.class);
+        final var convert = field.getAnnotation(Convert.class);
         if (nonNull(convert)) {
             builder.withConverter(convert.converter());
         }
@@ -82,7 +81,7 @@ public final class ClassRepresentations {
     }
 
     private static String tableName(@NotNull Class<?> clazz) {
-        final Entity annotation = clazz.getAnnotation(Entity.class);
+        final var annotation = clazz.getAnnotation(Entity.class);
         if (annotation == null) {
             return null;
         }
@@ -95,7 +94,7 @@ public final class ClassRepresentations {
     }
 
     private static Constructor makeAccessible(Class clazz) {
-        final List<Constructor> constructors = Stream.of(clazz.getDeclaredConstructors())
+        final var constructors = Stream.of(clazz.getDeclaredConstructors())
                 .filter(c -> c.getParameterCount() == 0)
                 .collect(toList());
         if (constructors.isEmpty()) {
@@ -106,7 +105,7 @@ public final class ClassRepresentations {
                 .filter(c -> Modifier.isPublic(c.getModifiers()))
                 .findFirst()
                 .orElseGet(() -> {
-                    Constructor constructor = constructors.get(0);
+                    final var constructor = constructors.get(0);
                     constructor.setAccessible(true);
                     return constructor;
                 });

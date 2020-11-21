@@ -16,6 +16,7 @@ public final class DoubleValueReader implements ValueReader {
         if (Double.class.isInstance(value)) {
             return (T) value;
         }
+
         if (Number.class.isInstance(value)) {
             return (T) Double.valueOf(Number.class.cast(value).doubleValue());
         } else {

@@ -1,6 +1,7 @@
 package com.github.ixtf.persistence.api.reader;
 
 import com.github.ixtf.persistence.api.ValueReader;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.math.BigDecimal;
 
@@ -15,13 +16,6 @@ public final class BigDecimalValueReader implements ValueReader {
 
     @Override
     public <T> T read(Class<T> clazz, Object value) {
-        if (BigDecimal.class.isInstance(value)) {
-            return (T) value;
-        }
-        if (Number.class.isInstance(value)) {
-            return (T) BigDecimal.valueOf(Number.class.cast(value).doubleValue());
-        } else {
-            return (T) BigDecimal.valueOf(Double.valueOf(value.toString()));
-        }
+        return ((T) (value instanceof BigDecimal ? value : NumberUtils.createBigDecimal(value.toString())));
     }
 }

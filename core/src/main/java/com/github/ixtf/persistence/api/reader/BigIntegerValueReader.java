@@ -1,6 +1,7 @@
 package com.github.ixtf.persistence.api.reader;
 
 import com.github.ixtf.persistence.api.ValueReader;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.math.BigInteger;
 
@@ -16,13 +17,6 @@ public final class BigIntegerValueReader implements ValueReader {
 
     @Override
     public <T> T read(Class<T> clazz, Object value) {
-        if (BigInteger.class.isInstance(value)) {
-            return (T) value;
-        }
-        if (Number.class.isInstance(value)) {
-            return (T) BigInteger.valueOf(Number.class.cast(value).longValue());
-        } else {
-            return (T) BigInteger.valueOf(Long.valueOf(value.toString()));
-        }
+        return ((T) (value instanceof BigInteger ? value : NumberUtils.createBigInteger(value.toString())));
     }
 }

@@ -7,10 +7,8 @@ import com.github.ixtf.persistence.reflection.GenericFieldRepresentation;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.PropertyUtils;
 
-import javax.persistence.AttributeConverter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.StreamSupport;
 
 /**
@@ -20,35 +18,33 @@ public abstract class AbstractEntityConverter implements EntityConverter {
     @SneakyThrows({InstantiationException.class, IllegalAccessException.class, IllegalArgumentException.class, InvocationTargetException.class})
     @Override
     public <T> T toEntity(ClassRepresentation<T> classRepresentation, Object dbData) {
-        final T entity = classRepresentation.getConstructor().newInstance();
-        classRepresentation.getFields().stream().forEach(it -> {
-            final Object colValue = getColValue(it, dbData);
-            fillEntityAttribute(entity, it, colValue);
-        });
+        final var entity = classRepresentation.getConstructor().newInstance();
+        fillEntity(entity, dbData);
         return entity;
     }
 
     @Override
     public void fillEntity(Object entity, Object dbData) {
-        final ClassRepresentation<Object> classRepresentation = ClassRepresentations.create(entity);
-        classRepresentation.getFields().stream().forEach(it -> {
-            final Object colValue = getColValue(it, dbData);
-            fillEntityAttribute(entity, it, colValue);
-        });
+        synchronized (entity) {
+            ClassRepresentations.create(entity).getFields().parallelStream().forEach(it -> {
+                final var colValue = getColValue(it, dbData);
+                fillEntityAttribute(entity, it, colValue);
+            });
+        }
     }
 
     @SneakyThrows({IllegalAccessException.class, NoSuchMethodException.class, InvocationTargetException.class})
     private void fillEntityAttribute(Object entity, FieldRepresentation fieldRepresentation, Object colValue) {
-        final String fieldName = fieldRepresentation.getFieldName();
-        final Class<?> nativeType = fieldRepresentation.getFieldType();
+        final var fieldName = fieldRepresentation.getFieldName();
+        final var nativeType = fieldRepresentation.getFieldType();
         if (colValue == null) {
             setEntityAttributeValue(entity, fieldName, nativeType, colValue);
             return;
         }
 
-        final AttributeConverter attributeConverter = EntityConverter.attributeConverter(fieldRepresentation);
+        final var attributeConverter = EntityConverter.attributeConverter(fieldRepresentation);
         if (attributeConverter != null) {
-            final Object value = attributeConverter.convertToEntityAttribute(colValue);
+            final var value = attributeConverter.convertToEntityAttribute(colValue);
             setEntityAttributeValue(entity, fieldName, nativeType, value);
             return;
         }
@@ -59,20 +55,20 @@ public abstract class AbstractEntityConverter implements EntityConverter {
                 throw new UnsupportedOperationException();
             }
             case SUBENTITY: {
-                final Object o = convertToEntityAttribute_SubEntity(entity, fieldRepresentation, colValue);
+                final var o = convertToEntityAttribute_SubEntity(entity, fieldRepresentation, colValue);
                 PropertyUtils.setProperty(entity, fieldName, o);
                 return;
             }
             case EMBEDDABLE: {
-                final Object o = convertToEntityAttribute_Embeddable(entity, fieldRepresentation, colValue);
+                final var o = convertToEntityAttribute_Embeddable(entity, fieldRepresentation, colValue);
                 PropertyUtils.setProperty(entity, fieldName, o);
                 return;
             }
             case COLLECTION: {
-                final GenericFieldRepresentation genericFieldRepresentation = (GenericFieldRepresentation) fieldRepresentation;
-                final Class elementType = genericFieldRepresentation.getElementType();
-                final Collector collector = genericFieldRepresentation.getCollector();
-                final Iterable iterable = (Iterable) colValue;
+                final var genericFieldRepresentation = (GenericFieldRepresentation) fieldRepresentation;
+                final var elementType = genericFieldRepresentation.getElementType();
+                final var collector = genericFieldRepresentation.getCollector();
+                final var iterable = (Iterable) colValue;
                 final Object o;
                 if (genericFieldRepresentation.isEntityField()) {
                     o = convertToEntityAttribute_Collection_Entity(entity, genericFieldRepresentation, iterable);
@@ -86,8 +82,8 @@ public abstract class AbstractEntityConverter implements EntityConverter {
                 return;
             }
             default: {
-                final ValueReaderDecorator valueReader = ValueReaderDecorator.getInstance();
-                final Object value = valueReader.read(nativeType, colValue);
+                final var valueReader = ValueReaderDecorator.getInstance();
+                final var value = valueReader.read(nativeType, colValue);
                 setEntityAttributeValue(entity, fieldName, nativeType, value);
                 return;
             }
@@ -132,23 +128,23 @@ public abstract class AbstractEntityConverter implements EntityConverter {
     @SneakyThrows
     @Override
     public <T> T toDbData(T dbData, Object entity) {
-        final ClassRepresentation<?> classRepresentation = ClassRepresentations.create(entity);
-        classRepresentation.getFields().forEach(it -> fillDatabaseColumn(entity, it, dbData));
+        final var classRepresentation = ClassRepresentations.create(entity);
+        classRepresentation.getFields().parallelStream().forEach(it -> fillDatabaseColumn(entity, it, dbData));
         return dbData;
     }
 
     @SneakyThrows
     private void fillDatabaseColumn(Object entity, FieldRepresentation fieldRepresentation, Object dbData) {
-        final String fieldName = fieldRepresentation.getFieldName();
-        final Object fieldValue = PropertyUtils.getProperty(entity, fieldName);
+        final var fieldName = fieldRepresentation.getFieldName();
+        final var fieldValue = PropertyUtils.getProperty(entity, fieldName);
         if (fieldValue == null) {
             setDatabaseColumnValue(entity, fieldRepresentation, dbData, fieldValue);
             return;
         }
 
-        final AttributeConverter attributeConverter = EntityConverter.attributeConverter(fieldRepresentation);
+        final var attributeConverter = EntityConverter.attributeConverter(fieldRepresentation);
         if (attributeConverter != null) {
-            final Object colValue = attributeConverter.convertToDatabaseColumn(fieldValue);
+            final var colValue = attributeConverter.convertToDatabaseColumn(fieldValue);
             setDatabaseColumnValue(entity, fieldRepresentation, dbData, colValue);
             return;
         }
@@ -159,17 +155,17 @@ public abstract class AbstractEntityConverter implements EntityConverter {
                 throw new UnsupportedOperationException();
             }
             case SUBENTITY: {
-                final Object o = convertToDatabaseColumn_SubEntity(entity, fieldRepresentation, fieldValue);
+                final var o = convertToDatabaseColumn_SubEntity(entity, fieldRepresentation, fieldValue);
                 setDatabaseColumnValue(entity, fieldRepresentation, dbData, o);
                 return;
             }
             case EMBEDDABLE: {
-                final Object o = convertToDatabaseColumn_Embeddable(entity, fieldRepresentation, fieldValue);
+                final var o = convertToDatabaseColumn_Embeddable(entity, fieldRepresentation, fieldValue);
                 setDatabaseColumnValue(entity, fieldRepresentation, dbData, o);
                 return;
             }
             case COLLECTION: {
-                final Object o = convertToDatabaseColumn_Collection(entity, (GenericFieldRepresentation) fieldRepresentation, (Iterable) fieldValue);
+                final var o = convertToDatabaseColumn_Collection(entity, (GenericFieldRepresentation) fieldRepresentation, (Iterable) fieldValue);
                 setDatabaseColumnValue(entity, fieldRepresentation, dbData, o);
                 return;
             }

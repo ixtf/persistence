@@ -1,16 +1,17 @@
 package com.github.ixtf.persistence.api;
 
-import com.google.common.collect.Lists;
-
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
 public final class ValueReaderDecorator implements ValueReader {
     private static final ValueReaderDecorator INSTANCE = new ValueReaderDecorator();
-    private final List<ValueReader> readers = Lists.newArrayList();
+    private static final List<ValueReader> readers = ServiceLoader.load(ValueReader.class)
+            .stream().parallel()
+            .map(ServiceLoader.Provider::get)
+            .collect(Collectors.toUnmodifiableList());
 
-    {
-        ServiceLoader.load(ValueReader.class).forEach(readers::add);
+    private ValueReaderDecorator() {
     }
 
     public static ValueReaderDecorator getInstance() {
@@ -19,7 +20,7 @@ public final class ValueReaderDecorator implements ValueReader {
 
     @Override
     public boolean isCompatible(Class clazz) {
-        return readers.stream().anyMatch(r -> r.isCompatible(clazz));
+        return readers.parallelStream().anyMatch(r -> r.isCompatible(clazz));
     }
 
     @Override
@@ -27,7 +28,9 @@ public final class ValueReaderDecorator implements ValueReader {
         if (clazz.isInstance(value)) {
             return clazz.cast(value);
         }
-        ValueReader valueReader = readers.stream().filter(r -> r.isCompatible(clazz)).findFirst()
+        final var valueReader = readers.parallelStream()
+                .filter(r -> r.isCompatible(clazz))
+                .findFirst()
                 .orElseThrow(() -> new UnsupportedOperationException("类型[" + clazz + "]不支持"));
         return valueReader.read(clazz, value);
     }

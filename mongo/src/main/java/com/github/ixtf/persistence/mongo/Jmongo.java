@@ -52,7 +52,7 @@ public abstract class Jmongo {
             }
         };
     });
-    private final LoadingCache<Pair<Class<?>, Object>, Object> entityCache;
+    private final LoadingCache<Pair<Class, Object>, Object> entityCache;
     private final EntityConverter entityConverter;
 
     private Jmongo() {
@@ -103,24 +103,19 @@ public abstract class Jmongo {
     }
 
     public <T> Mono<T> find(Class<T> entityClass, Object id) {
-        final var classRepresentation = ClassRepresentations.create(entityClass);
         if (isCacheable(entityClass)) {
-            final Pair<Class<?>, Object> key = Pair.of(classRepresentation.getEntityClass(), id);
-            return Mono.fromCallable(() -> entityCache.get(key)).cast(entityClass);
+            return Mono.fromCallable(() -> {
+                final var classRepresentation = ClassRepresentations.create(entityClass);
+                return (T) entityCache.get(Pair.of(classRepresentation.getEntityClass(), id));
+            });
         }
         return find(entityClass, eq(ID_COL, id));
     }
 
     public void refresh(Class<?> entityClass, Object id) {
         if (isCacheable(entityClass)) {
-            final Pair<Class<?>, Object> key = Pair.of(entityClass, id);
-            final var ifPresent = entityCache.getIfPresent(key);
-            if (ifPresent != null) {
-                Mono.from(collection(entityClass).find(eq(ID_COL, id))).subscribe(it -> {
-                    entityConverter.fillEntity(ifPresent, it);
-                    entityCache.refresh(key);
-                });
-            }
+            ofNullable(entityCache.getIfPresent(Pair.of(entityClass, id)))
+                    .ifPresent(ifPresent -> find(entityClass, eq(ID_COL, id)).subscribe(it -> entityConverter.fillEntity(ifPresent, it)));
         }
     }
 

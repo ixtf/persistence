@@ -1,12 +1,7 @@
 dependencies {
     compile project(":core"),
-            "org.mongodb:mongodb-driver-async:3.12.3",
-            "org.mongodb:mongodb-driver-reactivestreams:4.0.2"
+            "org.mongodb:mongodb-driver-reactivestreams:4.1.1"
 
-// https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy
-    testCompile group: 'net.bytebuddy', name: 'byte-buddy', version: '1.10.3'
-    testCompile group: 'net.bytebuddy', name: 'byte-buddy-agent', version: '1.10.3'
     testCompile 'com.github.ixtf.japp:poi'
     testCompile 'com.github.ixtf.japp:codec'
-    testImplementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '4.1.0'
 }

@@ -3,5 +3,7 @@ dependencies {
             "io.projectreactor:reactor-core",
             "javax:javaee-api",
             "cglib:cglib",
+            "net.bytebuddy:byte-buddy",
+            "net.bytebuddy:byte-buddy-agent",
             "commons-beanutils:commons-beanutils"
 }

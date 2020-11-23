@@ -26,7 +26,7 @@ public abstract class AbstractEntityConverter implements EntityConverter {
     @Override
     public void fillEntity(Object entity, Object dbData) {
         synchronized (entity) {
-            ClassRepresentations.create(entity).getFields().parallelStream().forEach(it -> {
+            ClassRepresentations.create(entity).getFields().forEach(it -> {
                 final var colValue = getColValue(it, dbData);
                 fillEntityAttribute(entity, it, colValue);
             });
@@ -129,7 +129,7 @@ public abstract class AbstractEntityConverter implements EntityConverter {
     @Override
     public <T> T toDbData(T dbData, Object entity) {
         final var classRepresentation = ClassRepresentations.create(entity);
-        classRepresentation.getFields().parallelStream().forEach(it -> fillDatabaseColumn(entity, it, dbData));
+        classRepresentation.getFields().forEach(it -> fillDatabaseColumn(entity, it, dbData));
         return dbData;
     }
 

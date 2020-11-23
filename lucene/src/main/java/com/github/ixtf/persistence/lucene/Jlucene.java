@@ -192,7 +192,7 @@ public class Jlucene {
 
     public static BooleanQuery.Builder add(BooleanQuery.Builder builder, String fieldName, Collection<String> ss) {
         if (J.nonEmpty(ss)) {
-            final BooleanQuery.Builder subBuilder = new BooleanQuery.Builder();
+            final var subBuilder = new BooleanQuery.Builder();
             ss.stream().filter(J::nonBlank)
                     .map(it -> new TermQuery(new Term(fieldName, it)))
                     .forEach(it -> subBuilder.add(it, BooleanClause.Occur.SHOULD));
@@ -235,8 +235,9 @@ public class Jlucene {
     }
 
     public static Stream<? extends Class<?>> streamBaseLucene(String... pkgNames) {
-        @Cleanup final ScanResult scanResult = new ClassGraph().enableAllInfo()
-                .whitelistPackages(pkgNames)
+        @Cleanup final var scanResult = new ClassGraph()
+                .enableAllInfo()
+                .acceptPackages(pkgNames)
                 .scan();
         return scanResult.getSubclasses(BaseLucene.class.getName())
                 .filter(classInfo -> !classInfo.isAbstract() && !classInfo.isInterface())

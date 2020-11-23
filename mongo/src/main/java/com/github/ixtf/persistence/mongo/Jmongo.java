@@ -138,9 +138,9 @@ public abstract class Jmongo {
     /**
      * 查询单条数据
      *
-     * @param entityClass
+     * @param entityClass 实体类
      * @param filter      注意过滤条件，必须唯一或无数据，不然会报错
-     * @param <T>
+     * @param <T>         实体类
      * @return
      */
     public <T> Mono<T> find(Class<T> entityClass, Bson filter) {

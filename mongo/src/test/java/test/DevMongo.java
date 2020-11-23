@@ -1,4 +1,4 @@
-package pro;
+package test;
 
 import com.github.ixtf.persistence.mongo.Jmongo;
 import com.github.ixtf.persistence.mongo.JmongoOptions;
@@ -6,6 +6,7 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
+import org.bson.Document;
 import reactor.core.publisher.Mono;
 import test.domain.Operator;
 

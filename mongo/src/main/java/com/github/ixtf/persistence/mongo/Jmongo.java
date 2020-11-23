@@ -144,7 +144,7 @@ public abstract class Jmongo {
      * @return
      */
     public <T> Mono<T> find(Class<T> entityClass, Bson filter) {
-        return Flux.from(collection(entityClass).find(filter))
+        return Flux.from(collection(entityClass).find(filter).limit(2))
                 .map(it -> entityConverter.toEntity(entityClass, it))
                 .collectList()
                 .flatMap(list -> {

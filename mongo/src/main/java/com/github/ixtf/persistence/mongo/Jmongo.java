@@ -141,7 +141,7 @@ public abstract class Jmongo {
      * @param entityClass 实体类
      * @param filter      注意过滤条件，必须唯一或无数据，不然会报错
      * @param <T>         实体类
-     * @return
+     * @return 实体类
      */
     public <T> Mono<T> find(Class<T> entityClass, Bson filter) {
         return Flux.from(collection(entityClass).find(filter).limit(2))

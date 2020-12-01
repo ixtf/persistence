@@ -1,5 +1,6 @@
 package com.github.ixtf.persistence;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -10,7 +11,7 @@ public interface IEntityLoggable<T extends IEntityLoggable.IOperator> extends IE
     /**
      * @author jzb 2019-02-28
      */
-    interface IOperator {
+    interface IOperator extends Serializable {
 
         String getId();
 

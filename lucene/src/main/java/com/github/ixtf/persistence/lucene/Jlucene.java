@@ -3,8 +3,8 @@ package com.github.ixtf.persistence.lucene;
 import com.github.ixtf.japp.core.J;
 import com.github.ixtf.persistence.IEntity;
 import com.github.ixtf.persistence.IEntityLoggable;
+import com.github.ixtf.persistence.IEntityLoggable.IOperator;
 import io.github.classgraph.ClassGraph;
-import io.github.classgraph.ScanResult;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.ArrayUtils;
@@ -98,9 +98,9 @@ public class Jlucene {
     }
 
     public static void addLoggable(@NotNull Document doc, IEntityLoggable entity) {
-        add(doc, "creator", entity.getCreator());
+        ofNullable(entity.getCreator()).map(IOperator::getId).filter(J::nonBlank).ifPresent(it -> addFacet(doc, "creator", it));
         add(doc, "createDateTime", entity.getCreateDateTime());
-        add(doc, "modifier", entity.getModifier());
+        ofNullable(entity.getModifier()).map(IOperator::getId).filter(J::nonBlank).ifPresent(it -> addFacet(doc, "modifier", it));
         add(doc, "modifyDateTime", entity.getModifyDateTime());
     }
 

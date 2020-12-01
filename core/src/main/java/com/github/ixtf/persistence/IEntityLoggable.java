@@ -5,7 +5,21 @@ import java.util.Date;
 /**
  * @author jzb 2019-02-28
  */
-public interface IEntityLoggable<T extends IOperator> extends IEntity {
+public interface IEntityLoggable<T extends IEntityLoggable.IOperator> extends IEntity {
+
+    /**
+     * @author jzb 2019-02-28
+     */
+    interface IOperator {
+
+        String getId();
+
+        void setId(String id);
+
+        String getName();
+
+        void setName(String name);
+    }
 
     T getCreator();
 
@@ -36,5 +50,4 @@ public interface IEntityLoggable<T extends IOperator> extends IEntity {
             setModifyDateTime(date);
         }
     }
-
 }

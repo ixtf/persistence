@@ -45,9 +45,12 @@ public interface IEntityLoggable<T extends IEntityLoggable.IOperator> extends IE
     default void log(T operator, Date date) {
         if (getCreator() == null) {
             setCreator(operator);
-            setCreateDateTime(date);
         } else {
             setModifier(operator);
+        }
+        if (getCreateDateTime() == null) {
+            setCreateDateTime(date);
+        } else {
             setModifyDateTime(date);
         }
     }

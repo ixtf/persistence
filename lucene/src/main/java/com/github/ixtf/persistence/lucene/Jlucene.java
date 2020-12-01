@@ -39,6 +39,7 @@ import static java.util.stream.Collectors.toUnmodifiableList;
  */
 public class Jlucene {
     public static final String ID = "id";
+    public static final String NULL = "_NULL_";
 
     public static List<String> ids(IndexSearcher searcher, TopDocs topDocs) {
         return ofNullable(topDocs).stream()
@@ -90,11 +91,13 @@ public class Jlucene {
     }
 
     public static void add(@NotNull Document doc, @NotBlank String fieldName, IEntity entity) {
-        ofNullable(entity).map(IEntity::getId).filter(J::nonBlank).ifPresent(it -> add(doc, fieldName, it));
+        final var v = ofNullable(entity).map(IEntity::getId).filter(J::nonBlank).orElse(NULL);
+        add(doc, fieldName, v);
     }
 
     public static void addFacet(@NotNull Document doc, @NotBlank String fieldName, IEntity entity) {
-        ofNullable(entity).map(IEntity::getId).filter(J::nonBlank).ifPresent(it -> addFacet(doc, fieldName, it));
+        final var v = ofNullable(entity).map(IEntity::getId).filter(J::nonBlank).orElse(NULL);
+        addFacet(doc, fieldName, v);
     }
 
     public static void addLoggable(@NotNull Document doc, IEntityLoggable entity) {
@@ -117,15 +120,18 @@ public class Jlucene {
     }
 
     public static void add(@NotNull Document doc, @NotBlank String fieldName, Enum e) {
-        ofNullable(e).map(Enum::name).ifPresent(it -> add(doc, fieldName, it));
+        final var v = ofNullable(e).map(Enum::name).orElse(NULL);
+        add(doc, fieldName, v);
     }
 
     public static void add(@NotNull Document doc, @NotBlank String fieldName, Enum e, Field.Store store) {
-        ofNullable(e).map(Enum::name).ifPresent(it -> add(doc, fieldName, it, store));
+        final var v = ofNullable(e).map(Enum::name).orElse(NULL);
+        add(doc, fieldName, v, store);
     }
 
     public static void addFacet(@NotNull Document doc, @NotBlank String fieldName, Enum e) {
-        ofNullable(e).map(Enum::name).ifPresent(it -> addFacet(doc, fieldName, it));
+        final var v = ofNullable(e).map(Enum::name).orElse(NULL);
+        addFacet(doc, fieldName, v);
     }
 
     public static void add(@NotNull Document doc, @NotBlank String fieldName, Date date) {

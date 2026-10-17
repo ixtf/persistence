@@ -16,9 +16,9 @@ import org.bson.codecs.configuration.CodecRegistry
 
 @Module
 abstract class MongoRuntimeModule {
-  @Multibinds abstract fun customCodecRegistry(): Set<CodecRegistry>
+  @Multibinds abstract fun custom(): Set<CodecRegistry>
 
-  @BindsOptionalOf abstract fun mongoClientHook(): MongoClientHook
+  @BindsOptionalOf abstract fun hook(): MongoClientHook
 
   companion object {
     @JvmStatic

@@ -10,6 +10,7 @@ import dagger.BindsOptionalOf
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.Multibinds
+import jakarta.inject.Singleton
 import java.util.Optional
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.codecs.configuration.CodecRegistry
@@ -22,6 +23,7 @@ abstract class MongoRuntimeModule {
 
   companion object {
     @JvmStatic
+    @Singleton
     @Provides
     fun jmongo(
       config: MongoRuntimeModuleConfig,

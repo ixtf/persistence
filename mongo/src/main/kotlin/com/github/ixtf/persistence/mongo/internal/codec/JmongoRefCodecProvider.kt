@@ -1,4 +1,4 @@
-package com.gitee.ixtf.mongo.codec
+package com.github.ixtf.persistence.mongo.internal.codec
 
 import com.github.ixtf.persistence.mongo.MongoEntityBase
 import com.github.ixtf.persistence.mongo.MongoRuntimeModuleConfig
@@ -12,14 +12,14 @@ import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistry
 
-@Deprecated("user id")
+@Deprecated("use id")
 data class JmongoRef<T : MongoEntityBase>(
   val databaseName: String? = null,
   val collectionName: String,
   val id: String,
 )
 
-@Deprecated("user id")
+@Deprecated("use id")
 internal class JmongoRefCodecProvider(private val config: MongoRuntimeModuleConfig) :
   CodecProvider {
   @Suppress("UNCHECKED_CAST")
@@ -27,7 +27,7 @@ internal class JmongoRefCodecProvider(private val config: MongoRuntimeModuleConf
     if (clazz == JmongoRef::class.java) JmongoRefCodec(config) as Codec<T> else null
 }
 
-@Deprecated("user id")
+@Deprecated("use id")
 internal class JmongoRefCodec(config: MongoRuntimeModuleConfig) : Codec<JmongoRef<*>> {
   private val defaultDatabaseName = config.database
 

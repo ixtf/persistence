@@ -1,9 +1,9 @@
 package com.github.ixtf.persistence.mongo.internal
 
-import com.gitee.ixtf.mongo.kotlinx.exists
 import com.github.ixtf.persistence.IEntity
 import com.github.ixtf.persistence.mongo.Jmongo
 import com.github.ixtf.persistence.mongo.Jmongo.Companion.idEq
+import com.github.ixtf.persistence.mongo.kotlinx.exists
 import com.github.ixtf.persistence.uof.AbstractUnitOfWork
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 

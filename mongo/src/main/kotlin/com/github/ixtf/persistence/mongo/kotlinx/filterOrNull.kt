@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.gitee.ixtf.mongo.kotlinx
+package com.github.ixtf.persistence.mongo.kotlinx
 
 import cn.hutool.core.util.ReUtil
 import com.github.ixtf.core.J

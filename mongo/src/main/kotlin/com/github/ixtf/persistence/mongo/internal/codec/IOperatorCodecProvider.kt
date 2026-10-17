@@ -1,4 +1,4 @@
-package com.gitee.ixtf.mongo.codec
+package com.github.ixtf.persistence.mongo.internal.codec
 
 import com.github.ixtf.persistence.IOperator
 import com.github.ixtf.persistence.dto.DefaultOperator
@@ -12,7 +12,7 @@ import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistry
 
-@Deprecated("user DefaultOperator")
+@Deprecated("use DefaultOperator")
 object IOperatorCodecProvider : CodecProvider {
   @Suppress("UNCHECKED_CAST")
   override fun <T : Any> get(clazz: Class<T>, registry: CodecRegistry?): Codec<T>? =
@@ -21,7 +21,7 @@ object IOperatorCodecProvider : CodecProvider {
       ?.let { IOperatorCodec as Codec<T> }
 }
 
-@Deprecated("user DefaultOperator")
+@Deprecated("use DefaultOperator")
 object IOperatorCodec : Codec<IOperator> {
   private const val ID_COL = "id"
   private const val OLD_ID_COL = "_id"

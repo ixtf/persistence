@@ -1,7 +1,7 @@
 package com.github.ixtf.persistence.mongo
 
-import com.gitee.ixtf.mongo.codec.IOperatorCodecProvider
-import com.gitee.ixtf.mongo.codec.JmongoRefCodecProvider
+import com.github.ixtf.persistence.mongo.internal.codec.IOperatorCodecProvider
+import com.github.ixtf.persistence.mongo.internal.codec.JmongoRefCodecProvider
 import com.mongodb.MongoClientSettings
 import com.mongodb.ServerApi
 import com.mongodb.ServerApiVersion

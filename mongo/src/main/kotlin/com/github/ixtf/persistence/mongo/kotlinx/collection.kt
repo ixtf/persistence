@@ -1,4 +1,4 @@
-package com.gitee.ixtf.mongo.kotlinx
+package com.github.ixtf.persistence.mongo.kotlinx
 
 import cn.hutool.log.Log
 import com.github.ixtf.persistence.Sort

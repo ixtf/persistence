@@ -5,6 +5,4 @@ plugins {
 
 dependencies {
   api("io.github.ixtf:core")
-  api("com.google.guava:guava")
-  api("jakarta.validation:jakarta.validation-api")
 }

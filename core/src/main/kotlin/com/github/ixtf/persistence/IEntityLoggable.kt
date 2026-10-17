@@ -1,5 +1,6 @@
 package com.github.ixtf.persistence
 
+import com.github.ixtf.persistence.dto.DefaultOperator
 import java.util.Date
 
 interface IEntityLoggable : IEntity {

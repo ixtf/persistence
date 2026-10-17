@@ -1,4 +1,6 @@
-package com.github.ixtf.persistence
+package com.github.ixtf.persistence.uof
+
+import com.github.ixtf.persistence.IEntity
 
 interface UnitOfWork {
   fun registerSave(o: IEntity)

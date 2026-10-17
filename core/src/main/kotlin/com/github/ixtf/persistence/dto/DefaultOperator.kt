@@ -1,5 +1,6 @@
-package com.github.ixtf.persistence
+package com.github.ixtf.persistence.dto
 
+import com.github.ixtf.persistence.IOperator
 import jakarta.validation.constraints.NotBlank
 
 data class DefaultOperator(@NotBlank override val id: String, @NotBlank override val name: String) :

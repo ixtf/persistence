@@ -1,5 +1,6 @@
-package com.github.ixtf.persistence
+package com.github.ixtf.persistence.uof
 
+import com.github.ixtf.persistence.IEntity
 import com.google.common.collect.Lists
 import java.util.Collections
 

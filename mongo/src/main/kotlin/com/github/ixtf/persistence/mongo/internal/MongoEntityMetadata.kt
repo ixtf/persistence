@@ -7,7 +7,7 @@ import org.bson.Document
 
 class MongoEntityMetadata(private val jmongo: Jmongo, private val clazz: Class<*>) {
   private val annoMongoEntity by lazy { clazz.getAnnotation(MongoEntity::class.java) }
-  val database by lazy {
+  internal val database by lazy {
     annoMongoEntity?.database?.takeIf { it.isNotBlank() }?.let { jmongo.client.getDatabase(it) }
       ?: jmongo.database
   }

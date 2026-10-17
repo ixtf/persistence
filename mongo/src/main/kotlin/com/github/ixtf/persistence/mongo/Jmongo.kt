@@ -52,7 +52,7 @@ class Jmongo(val client: MongoClient, database: String) {
     fun asFilter(condition: Flow<Bson?>): Flow<Bson?> = condition.onStart { emit(DELETED_FALSE) }
   }
 
-  val database by lazy { client.getDatabase(database) }
+  val database = client.getDatabase(database)
   private val metadataCache: LoadingCache<Class<*>, MongoEntityMetadata> by lazy {
     Caffeine.newBuilder().build { MongoEntityMetadata(this, it) }
   }

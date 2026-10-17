@@ -16,6 +16,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "persistence"
 
+include("core")
+
 include("mongo")
 
 include("arcade")

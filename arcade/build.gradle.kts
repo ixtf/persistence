@@ -3,4 +3,13 @@ plugins {
   alias(libs.plugins.convention.maven.publish)
 }
 
-dependencies { api("io.github.ixtf:vertx") }
+dependencies {
+  api(project(":core"))
+
+  api(libs.arcadedb.engine)
+  api(libs.arcadedb.studio)
+  api(libs.arcadedb.graphql)
+
+  testImplementation(libs.arcadedb.server)
+  testImplementation(libs.arcadedb.ha.raft)
+}

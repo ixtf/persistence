@@ -1,0 +1,19 @@
+[versions]
+conVersion = "1.0.0"
+
+[libraries]
+ixtf-core = { module = "io.github.ixtf:core", version.ref = "conVersion" }
+ixtf-vertx = { module = "io.github.ixtf:vertx", version.ref = "conVersion" }
+ixtf-cqrs = { module = "io.github.ixtf:cqrs", version.ref = "conVersion" }
+ixtf-broker = { module = "io.github.ixtf:broker", version.ref = "conVersion" }
+
+[bundles]
+ixtf-sdk = ["ixtf-core", "ixtf-vertx", "ixtf-cqrs", "ixtf-broker"]
+
+[plugins]
+convention-spotless = { id = "io.github.ixtf.gradle.convention-spotless", version.ref = "conVersion" }
+convention-kotlin-jvm = { id = "io.github.ixtf.gradle.convention-kotlin-jvm", version.ref = "conVersion" }
+convention-maven-publish = { id = "io.github.ixtf.gradle.convention-maven-publish", version.ref = "conVersion" }
+convention-ksp = { id = "io.github.ixtf.gradle.convention-ksp", version.ref = "conVersion" }
+convention-vertx = { id = "io.github.ixtf.gradle.convention-vertx", version.ref = "conVersion" }
+convention-shadow = { id = "io.github.ixtf.gradle.convention-shadow", version.ref = "conVersion" }

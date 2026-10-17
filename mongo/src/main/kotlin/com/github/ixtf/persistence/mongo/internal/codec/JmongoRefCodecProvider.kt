@@ -1,11 +1,7 @@
 package com.gitee.ixtf.mongo.codec
 
-import com.gitee.ixtf.guice.Jguice
-import com.gitee.ixtf.guice.kotlinx.get
-import com.gitee.ixtf.mongo.Jmongo
-import com.gitee.ixtf.mongo.JmongoRef
-import com.gitee.ixtf.mongo.MongoEntityBase
 import com.github.ixtf.persistence.mongo.MongoEntityBase
+import com.github.ixtf.persistence.mongo.MongoRuntimeModuleConfig
 import org.bson.BsonReader
 import org.bson.BsonType
 import org.bson.BsonWriter
@@ -24,18 +20,16 @@ data class JmongoRef<T : MongoEntityBase>(
 )
 
 @Deprecated("user id")
-object JmongoRefCodecProvider : CodecProvider {
+internal class JmongoRefCodecProvider(private val config: MongoRuntimeModuleConfig) :
+  CodecProvider {
   @Suppress("UNCHECKED_CAST")
   override fun <T> get(clazz: Class<T>, registry: CodecRegistry?): Codec<T>? =
-    if (clazz == JmongoRef::class.java) JmongoRefCodec as Codec<T> else null
+    if (clazz == JmongoRef::class.java) JmongoRefCodec(config) as Codec<T> else null
 }
 
 @Deprecated("user id")
-object JmongoRefCodec : Codec<JmongoRef<*>> {
-  private const val DATABASE_NAME_COL = "\$db"
-  private const val COLLECTION_NAME_COL = "\$ref"
-  private const val ID_COL = "\$id"
-  private val defaultDatabaseName by lazy { Jguice.get<Jmongo>().database.name }
+internal class JmongoRefCodec(config: MongoRuntimeModuleConfig) : Codec<JmongoRef<*>> {
+  private val defaultDatabaseName = config.database
 
   override fun getEncoderClass() = JmongoRef::class.java
 
@@ -72,5 +66,11 @@ object JmongoRefCodec : Codec<JmongoRef<*>> {
       collectionName = requireNotNull(collectionName),
       id = requireNotNull(id),
     )
+  }
+
+  companion object {
+    private const val DATABASE_NAME_COL = "\$db"
+    private const val COLLECTION_NAME_COL = "\$ref"
+    private const val ID_COL = "\$id"
   }
 }

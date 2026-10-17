@@ -1,15 +1,15 @@
 package com.github.ixtf.persistence
 
 import com.github.ixtf.persistence.dto.DefaultOperator
-import java.util.Date
+import java.time.Instant
 
 interface IEntityLoggable : IEntity {
   var creator: DefaultOperator?
-  var createDateTime: Date?
+  var createDateTime: Instant?
   var modifier: DefaultOperator?
-  var modifyDateTime: Date?
+  var modifyDateTime: Instant?
 
-  fun log(o: IOperator, date: Date = Date()) {
+  fun log(o: IOperator, date: Instant = Instant.now()) {
     modifier = o as? DefaultOperator ?: DefaultOperator(o)
     modifyDateTime = date
     if (creator == null || creator == modifier) creator = modifier

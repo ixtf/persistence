@@ -3,10 +3,17 @@
 package com.github.ixtf.persistence.mongo
 
 import com.gitee.ixtf.mongo.codec.JmongoRef
+import com.gitee.ixtf.mongo.kotlinx.count
+import com.gitee.ixtf.mongo.kotlinx.fromBson
+import com.gitee.ixtf.mongo.kotlinx.list
+import com.gitee.ixtf.mongo.kotlinx.single
+import com.gitee.ixtf.mongo.kotlinx.singleOrNull
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.github.ixtf.persistence.IEntity
 import com.github.ixtf.persistence.dto.EntityDTO
+import com.github.ixtf.persistence.mongo.internal.MongoEntityMetadata
+import com.github.ixtf.persistence.mongo.internal.MongoUnitOfWork
 import com.mongodb.client.model.Filters.*
 import com.mongodb.kotlin.client.coroutine.FindFlow
 import com.mongodb.kotlin.client.coroutine.MongoClient

@@ -1,3 +1,3 @@
 package com.github.ixtf.persistence.mongo
 
-class MongoRuntimeModuleConfig(val database: String) {}
+data class MongoRuntimeModuleConfig(val database: String)

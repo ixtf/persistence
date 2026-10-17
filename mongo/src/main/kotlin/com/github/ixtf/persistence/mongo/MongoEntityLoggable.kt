@@ -4,7 +4,7 @@ import com.github.ixtf.persistence.IEntityLoggable
 import com.github.ixtf.persistence.dto.DefaultOperator
 import java.time.Instant
 
-abstract class MongoEntityLoggable : MongoEntity(), IEntityLoggable {
+abstract class MongoEntityLoggable : MongoEntityBase(), IEntityLoggable {
   override var creator: DefaultOperator? = null
   override var createDateTime: Instant? = null
   override var modifier: DefaultOperator? = null

@@ -6,5 +6,5 @@ import kotlin.reflect.KClass
 
 @Module
 abstract class MongoRuntimeModule {
-  @Multibinds abstract fun batchPublishers(): Set<KClass<MongoEntity>>
+  @Multibinds abstract fun batchPublishers(): Set<KClass<MongoEntityBase>>
 }

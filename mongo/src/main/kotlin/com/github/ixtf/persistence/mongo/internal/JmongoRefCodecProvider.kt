@@ -1,0 +1,76 @@
+package com.gitee.ixtf.mongo.codec
+
+import com.gitee.ixtf.guice.Jguice
+import com.gitee.ixtf.guice.kotlinx.get
+import com.gitee.ixtf.mongo.Jmongo
+import com.gitee.ixtf.mongo.JmongoRef
+import com.gitee.ixtf.mongo.MongoEntityBase
+import com.github.ixtf.persistence.mongo.MongoEntityBase
+import org.bson.BsonReader
+import org.bson.BsonType
+import org.bson.BsonWriter
+import org.bson.codecs.Codec
+import org.bson.codecs.DecoderContext
+import org.bson.codecs.EncoderContext
+import org.bson.codecs.configuration.CodecConfigurationException
+import org.bson.codecs.configuration.CodecProvider
+import org.bson.codecs.configuration.CodecRegistry
+
+@Deprecated("user id")
+data class JmongoRef<T : MongoEntityBase>(
+  val databaseName: String? = null,
+  val collectionName: String,
+  val id: String,
+)
+
+@Deprecated("user id")
+object JmongoRefCodecProvider : CodecProvider {
+  @Suppress("UNCHECKED_CAST")
+  override fun <T> get(clazz: Class<T>, registry: CodecRegistry?): Codec<T>? =
+    if (clazz == JmongoRef::class.java) JmongoRefCodec as Codec<T> else null
+}
+
+@Deprecated("user id")
+object JmongoRefCodec : Codec<JmongoRef<*>> {
+  private const val DATABASE_NAME_COL = "\$db"
+  private const val COLLECTION_NAME_COL = "\$ref"
+  private const val ID_COL = "\$id"
+  private val defaultDatabaseName by lazy { Jguice.get<Jmongo>().database.name }
+
+  override fun getEncoderClass() = JmongoRef::class.java
+
+  override fun encode(writer: BsonWriter, value: JmongoRef<*>?, encoderContext: EncoderContext) {
+    value?.apply {
+      writer.writeStartDocument()
+      databaseName
+        ?.takeIf { defaultDatabaseName != it }
+        ?.let { writer.writeString(DATABASE_NAME_COL, it) }
+      writer.writeString(COLLECTION_NAME_COL, collectionName)
+      writer.writeString(ID_COL, id)
+      writer.writeEndDocument()
+    }
+  }
+
+  override fun decode(reader: BsonReader, decoderContext: DecoderContext): JmongoRef<*> {
+    var databaseName: String? = null
+    var collectionName: String? = null
+    var id: String? = null
+    reader.readStartDocument()
+    while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+      val k = reader.readName()
+      val v = reader.readString()
+      when (k) {
+        DATABASE_NAME_COL -> databaseName = v
+        COLLECTION_NAME_COL -> collectionName = v
+        ID_COL -> id = v
+        else -> throw CodecConfigurationException("decode： $encoderClass for $k")
+      }
+    }
+    reader.readEndDocument()
+    return JmongoRef<MongoEntityBase>(
+      databaseName = databaseName,
+      collectionName = requireNotNull(collectionName),
+      id = requireNotNull(id),
+    )
+  }
+}

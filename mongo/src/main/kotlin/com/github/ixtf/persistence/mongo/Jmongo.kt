@@ -56,10 +56,10 @@ class Jmongo(
     collection<T>().count(asFilter(condition))
 
   suspend inline fun <reified T : MongoEntity> count(vararg condition: Bson?): Long =
-    count<T>(condition.asFlow())
+    count<T>(asFilter(condition.asFlow()))
 
   suspend inline fun <reified T : MongoEntity> count(condition: Iterable<Bson?>): Long =
-    count<T>(condition.asFlow())
+    count<T>(asFilter(condition.asFlow()))
 
   suspend inline fun <reified T : MongoEntity> list(condition: Flow<Bson?>): FindFlow<T> =
     entityCollection<T>().list(asFilter(condition))
@@ -120,7 +120,7 @@ class Jmongo(
   companion object {
     const val ID_COL = "_id"
     const val DELETED_COL = "deleted"
-    // const val DEFAULT_BATCH_SIZE = 10_000
+    const val DEFAULT_BATCH_SIZE = 10_000
     private val DELETED_FALSE = eq(DELETED_COL, false)
 
     fun idIn(o: Iterable<String>): Bson = `in`(ID_COL, o)

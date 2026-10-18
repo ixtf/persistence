@@ -32,6 +32,15 @@ fun MongoCollection<*>.ensureIndex(bson: Bson, options: IndexOptions) {
     .subscribe()
 }
 
+suspend fun MongoCollection<*>.count(condition: Bson? = null): Long =
+  condition?.let { countDocuments(it) } ?: countDocuments()
+
+suspend fun MongoCollection<*>.exists(id: Any): Boolean = countDocuments(idEq(id)) > 0
+
+suspend fun <T : Any> MongoCollection<T>.singleOrNull(id: Any): T? = find(idEq(id)).singleOrNull()
+
+suspend fun <T : Any> MongoCollection<T>.single(id: Any): T = find(idEq(id)).single()
+
 fun MongoCollection<*>.asBson(o: Any): BsonDocument =
   BsonDocument().also { bsonDocument ->
     BsonDocumentWriter(bsonDocument).use { writer ->
@@ -48,15 +57,6 @@ inline fun <reified T : Any> MongoCollection<*>.fromBson(bson: BsonDocument): T 
 
 inline fun <reified T : Any> MongoCollection<*>.fromBson(bson: String): T =
   fromBson(BsonDocument.parse(bson))
-
-suspend fun MongoCollection<*>.exists(id: Any): Boolean = countDocuments(idEq(id)) > 0
-
-suspend fun <T : Any> MongoCollection<T>.singleOrNull(id: Any): T? = find(idEq(id)).singleOrNull()
-
-suspend fun <T : Any> MongoCollection<T>.single(id: Any): T = find(idEq(id)).single()
-
-suspend fun MongoCollection<*>.count(condition: Bson? = null): Long =
-  condition?.let { countDocuments(it) } ?: countDocuments()
 
 suspend fun MongoCollection<*>.count(condition: Flow<Bson?>) = count(condition.asFilter())
 

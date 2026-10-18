@@ -2,8 +2,6 @@
 
 package com.github.ixtf.persistence.mongo
 
-import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.LoadingCache
 import com.github.ixtf.persistence.IEntity
 import com.github.ixtf.persistence.dto.EntityDTO
 import com.github.ixtf.persistence.mongo.internal.MongoEntityMetadata
@@ -14,6 +12,7 @@ import com.github.ixtf.persistence.mongo.kotlinx.fromBson
 import com.github.ixtf.persistence.mongo.kotlinx.list
 import com.github.ixtf.persistence.mongo.kotlinx.single
 import com.github.ixtf.persistence.mongo.kotlinx.singleOrNull
+import com.google.common.collect.Maps
 import com.mongodb.client.model.Filters.*
 import com.mongodb.kotlin.client.coroutine.FindFlow
 import com.mongodb.kotlin.client.coroutine.MongoClient
@@ -53,45 +52,42 @@ class Jmongo(val client: MongoClient, database: String) {
   }
 
   val database = client.getDatabase(database)
-  private val metadataCache: LoadingCache<Class<*>, MongoEntityMetadata> by lazy {
-    Caffeine.newBuilder().build { MongoEntityMetadata(this, it) }
-  }
+  private val metadataCache =
+    Maps.newConcurrentMap<Class<out MongoEntityBase>, MongoEntityMetadata>()
 
-  fun metadata(clazz: Class<*>): MongoEntityMetadata = metadataCache.get(clazz)
+  fun <T : MongoEntityBase> metadata(clazz: Class<T>): MongoEntityMetadata =
+    metadataCache.computeIfAbsent(clazz) {
+      MongoEntityMetadata(this, it)
+    }
 
-  fun database(clazz: Class<*>) = metadata(clazz).database
+  fun <T : MongoEntityBase> database(clazz: Class<T>) = metadata(clazz).database
 
-  fun collection(clazz: Class<*>) = metadata(clazz).collection
+  fun <T : MongoEntityBase> collection(clazz: Class<T>) = metadata(clazz).collection
 
   inline fun <reified T : MongoEntityBase> collection(): MongoCollection<Document> =
     metadata(T::class.java).collection
 
-  fun bsonCollection(clazz: Class<*>) = metadata(clazz).bsonCollection
-
   inline fun <reified T : MongoEntityBase> bsonCollection(): MongoCollection<BsonDocument> =
     metadata(T::class.java).bsonCollection
 
-  fun <T : Any> entityCollection(clazz: Class<T>) =
-    metadata(clazz).entityCollection as MongoCollection<T>
-
   inline fun <reified T : MongoEntityBase> entityCollection(): MongoCollection<T> =
     metadata(T::class.java).entityCollection as MongoCollection<T>
-
-  fun uow() = MongoUnitOfWork(this)
-
-  suspend fun uow(block: suspend MongoUnitOfWork.() -> Unit): Unit =
-    uow().apply { block() }.commit()
-
-  inline fun <reified T : MongoEntityBase> asRef(id: String): JmongoRef<T> =
-    collection(T::class.java).namespace.run {
-      JmongoRef(databaseName = databaseName, collectionName = collectionName, id = id)
-    }
 
   inline fun <reified T : MongoEntityBase> fromBson(bson: BsonDocument): T =
     collection<T>().fromBson<T>(bson)
 
   inline fun <reified T : MongoEntityBase> fromBson(bson: String): T =
     fromBson(BsonDocument.parse(bson))
+
+  fun uow() = MongoUnitOfWork(this)
+
+  suspend inline fun uow(crossinline block: suspend MongoUnitOfWork.() -> Unit): Unit =
+    uow().apply { block() }.commit()
+
+  inline fun <reified T : MongoEntityBase> asRef(id: String): JmongoRef<T> =
+    collection(T::class.java).namespace.run {
+      JmongoRef(databaseName = databaseName, collectionName = collectionName, id = id)
+    }
 
   suspend inline fun <reified T : MongoEntityBase> count(condition: Flow<Bson?>): Long =
     collection<T>().count(asFilter(condition))

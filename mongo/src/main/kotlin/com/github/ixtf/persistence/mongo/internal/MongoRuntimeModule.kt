@@ -35,16 +35,19 @@ abstract class MongoRuntimeModule {
       MongoClientSettings.builder().run {
         applyConnectionString(config.connectionString)
         serverApi(ServerApi.builder().version(ServerApiVersion.V1).build())
-        val registries = buildList {
-          add(backwardCodecRegistry(config))
-          addAll(custom)
-          add(MongoClientSettings.getDefaultCodecRegistry())
-        }
-        codecRegistry(CodecRegistries.fromRegistries(registries))
+        val codecRegistry =
+          CodecRegistries.fromRegistries(
+            buildList {
+              add(backwardCodecRegistry(config))
+              addAll(custom)
+              add(MongoClientSettings.getDefaultCodecRegistry())
+            }
+          )
+        codecRegistry(codecRegistry)
         retryWrites(true)
         retryReads(true)
         hook.ifPresent { it.build(this) }
-        Jmongo(MongoClient.create(build()), config.database)
+        Jmongo(MongoClient.create(build()), codecRegistry, config)
       }
 
     private fun backwardCodecRegistry(config: MongoRuntimeModuleConfig): CodecRegistry =

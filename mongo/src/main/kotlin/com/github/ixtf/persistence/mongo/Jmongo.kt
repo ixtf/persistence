@@ -5,6 +5,7 @@ package com.github.ixtf.persistence.mongo
 import com.github.ixtf.persistence.IEntity
 import com.github.ixtf.persistence.dto.EntityDTO
 import com.github.ixtf.persistence.mongo.internal.MongoEntityMetadata
+import com.github.ixtf.persistence.mongo.internal.MongoRuntimeModuleConfig
 import com.github.ixtf.persistence.mongo.internal.MongoUnitOfWork
 import com.github.ixtf.persistence.mongo.internal.codec.JmongoRef
 import com.github.ixtf.persistence.mongo.kotlinx.count
@@ -21,10 +22,15 @@ import java.security.Principal
 import kotlinx.coroutines.flow.*
 import org.bson.BsonDocument
 import org.bson.Document
+import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 import org.bson.types.ObjectId
 
-class Jmongo(val client: MongoClient, database: String) {
+class Jmongo(
+  val client: MongoClient,
+  val codecRegistry: CodecRegistry,
+  config: MongoRuntimeModuleConfig,
+) {
   companion object {
     const val ID_COL = "_id"
     const val DELETED_COL = "deleted"
@@ -51,7 +57,7 @@ class Jmongo(val client: MongoClient, database: String) {
     fun asFilter(condition: Flow<Bson?>): Flow<Bson?> = condition.onStart { emit(DELETED_FALSE) }
   }
 
-  val database = client.getDatabase(database)
+  val database = client.getDatabase(config.database)
   private val metadataCache =
     Maps.newConcurrentMap<Class<out MongoEntityBase>, MongoEntityMetadata>()
 

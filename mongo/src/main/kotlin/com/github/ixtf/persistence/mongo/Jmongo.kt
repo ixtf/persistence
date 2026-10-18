@@ -7,12 +7,12 @@ import com.github.ixtf.persistence.dto.EntityDTO
 import com.github.ixtf.persistence.mongo.internal.MongoEntityMetadata
 import com.github.ixtf.persistence.mongo.internal.MongoRuntimeModuleConfig
 import com.github.ixtf.persistence.mongo.internal.MongoUnitOfWork
+import com.github.ixtf.persistence.mongo.internal.api.count
+import com.github.ixtf.persistence.mongo.internal.api.fromBson
+import com.github.ixtf.persistence.mongo.internal.api.list
+import com.github.ixtf.persistence.mongo.internal.api.single
+import com.github.ixtf.persistence.mongo.internal.api.singleOrNull
 import com.github.ixtf.persistence.mongo.internal.codec.JmongoRef
-import com.github.ixtf.persistence.mongo.kotlinx.count
-import com.github.ixtf.persistence.mongo.kotlinx.fromBson
-import com.github.ixtf.persistence.mongo.kotlinx.list
-import com.github.ixtf.persistence.mongo.kotlinx.single
-import com.github.ixtf.persistence.mongo.kotlinx.singleOrNull
 import com.google.common.collect.Maps
 import com.mongodb.client.model.Filters.*
 import com.mongodb.kotlin.client.coroutine.FindFlow

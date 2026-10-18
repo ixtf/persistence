@@ -8,6 +8,7 @@ import com.github.ixtf.persistence.mongo.internal.MongoEntityMetadata
 import com.github.ixtf.persistence.mongo.internal.MongoRuntimeModuleConfig
 import com.github.ixtf.persistence.mongo.internal.MongoUnitOfWork
 import com.github.ixtf.persistence.mongo.internal.codec.JmongoRef
+import com.github.ixtf.persistence.mongo.internal.kit.asBson
 import com.github.ixtf.persistence.mongo.internal.kit.count
 import com.github.ixtf.persistence.mongo.internal.kit.fromBson
 import com.github.ixtf.persistence.mongo.internal.kit.list
@@ -78,11 +79,11 @@ class Jmongo(
   inline fun <reified T : MongoEntity> entityCollection(): MongoCollection<T> =
     metadata(T::class.java).entityCollection as MongoCollection<T>
 
-  inline fun <reified T : MongoEntity> fromBson(bson: BsonDocument): T =
-    collection<T>().fromBson<T>(bson)
+  fun asBson(o: Any): BsonDocument = codecRegistry.asBson(o)
 
-  inline fun <reified T : MongoEntity> fromBson(bson: String): T =
-    fromBson(BsonDocument.parse(bson))
+  inline fun <reified T : Any> fromBson(bson: BsonDocument): T = codecRegistry.fromBson(bson)
+
+  inline fun <reified T : Any> fromBson(bson: String): T = codecRegistry.fromBson(bson)
 
   fun uow() = MongoUnitOfWork(this)
 

@@ -15,10 +15,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactor.mono
 import org.bson.BsonDocument
-import org.bson.BsonDocumentReader
-import org.bson.BsonDocumentWriter
-import org.bson.codecs.DecoderContext
-import org.bson.codecs.EncoderContext
 import org.bson.conversions.Bson
 
 fun MongoCollection<*>.ensureIndex(bson: Bson, options: IndexOptions) {
@@ -41,22 +37,13 @@ suspend fun <T : Any> MongoCollection<T>.singleOrNull(id: Any): T? = find(idEq(i
 
 suspend fun <T : Any> MongoCollection<T>.single(id: Any): T = find(idEq(id)).single()
 
-fun MongoCollection<*>.asBson(o: Any): BsonDocument =
-  BsonDocument().also { bsonDocument ->
-    BsonDocumentWriter(bsonDocument).use { writer ->
-      val codec = codecRegistry.get(o.javaClass)
-      codec.encode(writer, o, EncoderContext.builder().build())
-    }
-  }
+fun MongoCollection<*>.asBson(o: Any): BsonDocument = codecRegistry.asBson(o)
 
 inline fun <reified T : Any> MongoCollection<*>.fromBson(bson: BsonDocument): T =
-  BsonDocumentReader(bson).use { reader ->
-    val codec = codecRegistry.get(T::class.java)
-    return codec.decode(reader, DecoderContext.builder().build())
-  }
+  codecRegistry.fromBson(bson)
 
 inline fun <reified T : Any> MongoCollection<*>.fromBson(bson: String): T =
-  fromBson(BsonDocument.parse(bson))
+  codecRegistry.fromBson(bson)
 
 suspend fun MongoCollection<*>.count(condition: Flow<Bson?>) = count(condition.asFilter())
 

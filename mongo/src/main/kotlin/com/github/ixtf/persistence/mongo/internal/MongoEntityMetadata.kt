@@ -6,10 +6,8 @@ import com.github.ixtf.persistence.mongo.MongoEntityCollection
 import org.bson.BsonDocument
 import org.bson.Document
 
-class MongoEntityMetadata(
-  jmongo: Jmongo,
-  private val clazz: Class<out MongoEntity>,
-) {
+class MongoEntityMetadata
+internal constructor(jmongo: Jmongo, private val clazz: Class<out MongoEntity>) {
   private val anno: MongoEntityCollection?
     get() = clazz.getAnnotation(MongoEntityCollection::class.java)
 

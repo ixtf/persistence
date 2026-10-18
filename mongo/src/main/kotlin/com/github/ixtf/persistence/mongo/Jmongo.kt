@@ -7,11 +7,11 @@ import com.github.ixtf.persistence.dto.EntityDTO
 import com.github.ixtf.persistence.mongo.internal.MongoEntityMetadata
 import com.github.ixtf.persistence.mongo.internal.MongoRuntimeModuleConfig
 import com.github.ixtf.persistence.mongo.internal.MongoUnitOfWork
-import com.github.ixtf.persistence.mongo.internal.api.count
-import com.github.ixtf.persistence.mongo.internal.api.fromBson
-import com.github.ixtf.persistence.mongo.internal.api.list
-import com.github.ixtf.persistence.mongo.internal.api.single
-import com.github.ixtf.persistence.mongo.internal.api.singleOrNull
+import com.github.ixtf.persistence.mongo.internal.kit.count
+import com.github.ixtf.persistence.mongo.internal.kit.fromBson
+import com.github.ixtf.persistence.mongo.internal.kit.list
+import com.github.ixtf.persistence.mongo.internal.kit.single
+import com.github.ixtf.persistence.mongo.internal.kit.singleOrNull
 import com.github.ixtf.persistence.mongo.internal.codec.JmongoRef
 import com.google.common.collect.Maps
 import com.mongodb.client.model.Filters.*

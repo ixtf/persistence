@@ -1,4 +1,4 @@
-package com.github.ixtf.persistence.mongo.internal.api
+package com.github.ixtf.persistence.mongo.internal.kit
 
 import cn.hutool.core.util.RandomUtil
 import cn.hutool.log.Log

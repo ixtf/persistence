@@ -1,4 +1,4 @@
-package com.github.ixtf.persistence.mongo.internal.api
+package com.github.ixtf.persistence.mongo.internal.kit
 
 import com.github.ixtf.core.kit.inputCommand
 import com.github.ixtf.core.kit.readJson

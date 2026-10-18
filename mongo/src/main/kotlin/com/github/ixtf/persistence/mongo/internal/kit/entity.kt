@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.github.ixtf.persistence.mongo.internal.api
+package com.github.ixtf.persistence.mongo.internal.kit
 
 import com.github.ixtf.persistence.mongo.Jmongo.Companion.DELETED_COL
 import com.github.ixtf.persistence.mongo.Jmongo.Companion.ID_COL

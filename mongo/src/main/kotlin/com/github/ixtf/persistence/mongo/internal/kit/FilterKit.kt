@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.github.ixtf.persistence.mongo.internal.api
+package com.github.ixtf.persistence.mongo.internal.kit
 
 import cn.hutool.core.util.ReUtil
 import com.github.ixtf.core.J

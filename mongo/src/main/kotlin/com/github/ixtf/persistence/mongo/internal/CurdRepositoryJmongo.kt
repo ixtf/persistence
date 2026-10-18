@@ -7,6 +7,7 @@ import com.github.ixtf.persistence.mongo.Jmongo.Companion.asFilter
 import com.github.ixtf.persistence.mongo.Jmongo.Companion.idIn
 import com.github.ixtf.persistence.mongo.MongoEntity
 import com.github.ixtf.persistence.mongo.internal.kit.count
+import com.github.ixtf.persistence.mongo.internal.kit.exists
 import com.github.ixtf.persistence.mongo.internal.kit.list
 import com.github.ixtf.persistence.mongo.internal.kit.single
 import com.github.ixtf.persistence.mongo.internal.kit.singleOrNull
@@ -26,6 +27,9 @@ abstract class CurdRepositoryJmongo<T : MongoEntity>(protected val jmongo: Jmong
   protected val entityCollection by lazy { jmongo.metadata.entityCollection(entityClass) }
   protected val collection by lazy { jmongo.metadata.collection(entityClass) }
   protected val bsonCollection by lazy { jmongo.metadata.bsonCollection(entityClass) }
+
+  suspend fun save(entity: T) =
+    if (entityCollection.exists(entity.id)) update(entity) else insert(entity)
 
   suspend fun insert(entity: T): Unit = jmongo.uow { registerNew(entity) }
 

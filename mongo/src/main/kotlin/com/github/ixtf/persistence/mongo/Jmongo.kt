@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.*
 import org.bson.BsonDocument
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import org.bson.types.ObjectId
 
 class Jmongo(
   val client: MongoClient,
@@ -47,22 +46,28 @@ class Jmongo(
 
   inline fun <reified T : Any> fromBson(bson: String): T = codecRegistry.fromBson(bson)
 
+  suspend inline fun <reified T : MongoEntity> single(id: Any) =
+    entityCollection<T>().single(idEq(id))
+
+  suspend inline fun <reified T : MongoEntity> singleOrNull(id: Any) =
+    entityCollection<T>().singleOrNull(idEq(id))
+
+  suspend inline fun <reified T : MongoEntity> count(condition: Flow<Bson?>): Long =
+    collection<T>().count(asFilter(condition))
+
+  suspend inline fun <reified T : MongoEntity> list(condition: Flow<Bson?>) =
+    entityCollection<T>().list(asFilter(condition))
+
   fun uow() = MongoUnitOfWork(this)
 
   suspend inline fun uow(crossinline block: suspend MongoUnitOfWork.() -> Unit): Unit =
     uow().apply { block() }.commit()
 
-  suspend inline fun <reified T : MongoEntity> count(condition: Flow<Bson?>): Long =
-    collection<T>().count(asFilter(condition))
-
   suspend inline fun <reified T : MongoEntity> count(vararg condition: Bson?): Long =
-    count<T>(asFilter(condition.asFlow()))
+    count<T>(condition.asFlow())
 
   suspend inline fun <reified T : MongoEntity> count(condition: Iterable<Bson?>): Long =
-    count<T>(asFilter(condition.asFlow()))
-
-  suspend inline fun <reified T : MongoEntity> list(condition: Flow<Bson?>): FindFlow<T> =
-    entityCollection<T>().list(asFilter(condition))
+    count<T>(condition.asFlow())
 
   suspend inline fun <reified T : MongoEntity> list(vararg condition: Bson?): FindFlow<T> =
     list(condition.asFlow())
@@ -88,35 +93,6 @@ class Jmongo(
   suspend inline fun <reified T : MongoEntity> listBson(condition: Iterable<Bson?>) =
     listBson<T>(condition.asFlow())
 
-  suspend inline fun <reified T : MongoEntity> singleOrNull(id: String) =
-    entityCollection<T>().singleOrNull(id)
-
-  suspend inline fun <reified T : MongoEntity> single(id: String) = entityCollection<T>().single(id)
-
-  suspend inline fun <reified T : MongoEntity> singleOrNull(id: ObjectId) =
-    entityCollection<T>().singleOrNull(id)
-
-  suspend inline fun <reified T : MongoEntity> single(id: ObjectId) =
-    entityCollection<T>().single(id)
-
-  suspend inline fun <reified T : MongoEntity> singleOrNull(id: EntityDTO) =
-    entityCollection<T>().singleOrNull(id)
-
-  suspend inline fun <reified T : MongoEntity> single(id: EntityDTO) =
-    entityCollection<T>().single(id)
-
-  suspend inline fun <reified T : MongoEntity> singleOrNull(id: Principal) =
-    entityCollection<T>().singleOrNull(id)
-
-  suspend inline fun <reified T : MongoEntity> single(id: Principal) =
-    entityCollection<T>().single(id)
-
-  suspend inline fun <reified T : MongoEntity> singleOrNull(id: JmongoRef<*>) =
-    entityCollection<T>().singleOrNull(id)
-
-  suspend inline fun <reified T : MongoEntity> single(id: JmongoRef<*>) =
-    entityCollection<T>().single(id)
-
   companion object {
     const val ID_COL = "_id"
     const val DELETED_COL = "deleted"
@@ -127,17 +103,11 @@ class Jmongo(
 
     fun idEq(o: Any): Bson =
       when (o) {
-        is String,
-        is ByteArray,
-        is Long,
-        is Int,
-        is Short,
-        is ObjectId -> eq(ID_COL, o)
         is EntityDTO -> eq(ID_COL, o.id)
         is Principal -> eq(ID_COL, o.name)
         is IEntity -> eq(ID_COL, o.id)
         is JmongoRef<*> -> eq(ID_COL, o.id)
-        else -> throw IllegalArgumentException("Unsupported type: $o")
+        else -> eq(ID_COL, o)
       }
 
     fun asFilter(condition: Flow<Bson?>): Flow<Bson?> = condition.onStart { emit(DELETED_FALSE) }

@@ -1,6 +1,6 @@
 package com.github.ixtf.persistence.mongo.internal.codec
 
-import com.github.ixtf.persistence.mongo.MongoEntityBase
+import com.github.ixtf.persistence.mongo.MongoEntity
 import com.github.ixtf.persistence.mongo.internal.MongoRuntimeModuleConfig
 import org.bson.BsonReader
 import org.bson.BsonType
@@ -13,7 +13,7 @@ import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistry
 
 @Deprecated("use id")
-data class JmongoRef<T : MongoEntityBase>(
+data class JmongoRef<T : MongoEntity>(
   val databaseName: String? = null,
   val collectionName: String,
   val id: String,
@@ -61,7 +61,7 @@ internal class JmongoRefCodec(config: MongoRuntimeModuleConfig) : Codec<JmongoRe
       }
     }
     reader.readEndDocument()
-    return JmongoRef<MongoEntityBase>(
+    return JmongoRef<MongoEntity>(
       databaseName = databaseName,
       collectionName = requireNotNull(collectionName),
       id = requireNotNull(id),

@@ -7,12 +7,12 @@ import com.github.ixtf.persistence.dto.EntityDTO
 import com.github.ixtf.persistence.mongo.internal.MongoEntityMetadata
 import com.github.ixtf.persistence.mongo.internal.MongoRuntimeModuleConfig
 import com.github.ixtf.persistence.mongo.internal.MongoUnitOfWork
+import com.github.ixtf.persistence.mongo.internal.codec.JmongoRef
 import com.github.ixtf.persistence.mongo.internal.kit.count
 import com.github.ixtf.persistence.mongo.internal.kit.fromBson
 import com.github.ixtf.persistence.mongo.internal.kit.list
 import com.github.ixtf.persistence.mongo.internal.kit.single
 import com.github.ixtf.persistence.mongo.internal.kit.singleOrNull
-import com.github.ixtf.persistence.mongo.internal.codec.JmongoRef
 import com.google.common.collect.Maps
 import com.mongodb.client.model.Filters.*
 import com.mongodb.kotlin.client.coroutine.FindFlow
@@ -58,31 +58,30 @@ class Jmongo(
   }
 
   val database = client.getDatabase(config.database)
-  private val metadataCache =
-    Maps.newConcurrentMap<Class<out MongoEntityBase>, MongoEntityMetadata>()
+  private val metadataCache = Maps.newConcurrentMap<Class<out MongoEntity>, MongoEntityMetadata>()
 
-  fun <T : MongoEntityBase> metadata(clazz: Class<T>): MongoEntityMetadata =
+  fun <T : MongoEntity> metadata(clazz: Class<T>): MongoEntityMetadata =
     metadataCache.computeIfAbsent(clazz) {
       MongoEntityMetadata(this, it)
     }
 
-  fun <T : MongoEntityBase> database(clazz: Class<T>) = metadata(clazz).database
+  fun <T : MongoEntity> database(clazz: Class<T>) = metadata(clazz).database
 
-  fun <T : MongoEntityBase> collection(clazz: Class<T>) = metadata(clazz).collection
+  fun <T : MongoEntity> collection(clazz: Class<T>) = metadata(clazz).collection
 
-  inline fun <reified T : MongoEntityBase> collection(): MongoCollection<Document> =
+  inline fun <reified T : MongoEntity> collection(): MongoCollection<Document> =
     metadata(T::class.java).collection
 
-  inline fun <reified T : MongoEntityBase> bsonCollection(): MongoCollection<BsonDocument> =
+  inline fun <reified T : MongoEntity> bsonCollection(): MongoCollection<BsonDocument> =
     metadata(T::class.java).bsonCollection
 
-  inline fun <reified T : MongoEntityBase> entityCollection(): MongoCollection<T> =
+  inline fun <reified T : MongoEntity> entityCollection(): MongoCollection<T> =
     metadata(T::class.java).entityCollection as MongoCollection<T>
 
-  inline fun <reified T : MongoEntityBase> fromBson(bson: BsonDocument): T =
+  inline fun <reified T : MongoEntity> fromBson(bson: BsonDocument): T =
     collection<T>().fromBson<T>(bson)
 
-  inline fun <reified T : MongoEntityBase> fromBson(bson: String): T =
+  inline fun <reified T : MongoEntity> fromBson(bson: String): T =
     fromBson(BsonDocument.parse(bson))
 
   fun uow() = MongoUnitOfWork(this)
@@ -90,74 +89,73 @@ class Jmongo(
   suspend inline fun uow(crossinline block: suspend MongoUnitOfWork.() -> Unit): Unit =
     uow().apply { block() }.commit()
 
-  inline fun <reified T : MongoEntityBase> asRef(id: String): JmongoRef<T> =
+  inline fun <reified T : MongoEntity> asRef(id: String): JmongoRef<T> =
     collection(T::class.java).namespace.run {
       JmongoRef(databaseName = databaseName, collectionName = collectionName, id = id)
     }
 
-  suspend inline fun <reified T : MongoEntityBase> count(condition: Flow<Bson?>): Long =
+  suspend inline fun <reified T : MongoEntity> count(condition: Flow<Bson?>): Long =
     collection<T>().count(asFilter(condition))
 
-  suspend inline fun <reified T : MongoEntityBase> count(vararg condition: Bson?): Long =
+  suspend inline fun <reified T : MongoEntity> count(vararg condition: Bson?): Long =
     count<T>(condition.asFlow())
 
-  suspend inline fun <reified T : MongoEntityBase> count(condition: Iterable<Bson?>): Long =
+  suspend inline fun <reified T : MongoEntity> count(condition: Iterable<Bson?>): Long =
     count<T>(condition.asFlow())
 
-  suspend inline fun <reified T : MongoEntityBase> list(condition: Flow<Bson?>): FindFlow<T> =
+  suspend inline fun <reified T : MongoEntity> list(condition: Flow<Bson?>): FindFlow<T> =
     entityCollection<T>().list(asFilter(condition))
 
-  suspend inline fun <reified T : MongoEntityBase> list(vararg condition: Bson?): FindFlow<T> =
+  suspend inline fun <reified T : MongoEntity> list(vararg condition: Bson?): FindFlow<T> =
     list(condition.asFlow())
 
-  suspend inline fun <reified T : MongoEntityBase> list(condition: Iterable<Bson?>): FindFlow<T> =
+  suspend inline fun <reified T : MongoEntity> list(condition: Iterable<Bson?>): FindFlow<T> =
     list(condition.asFlow())
 
-  suspend inline fun <reified T : MongoEntityBase> listDoc(condition: Flow<Bson?>) =
+  suspend inline fun <reified T : MongoEntity> listDoc(condition: Flow<Bson?>) =
     collection<T>().list(asFilter(condition))
 
-  suspend inline fun <reified T : MongoEntityBase> listDoc(vararg condition: Bson?) =
+  suspend inline fun <reified T : MongoEntity> listDoc(vararg condition: Bson?) =
     listDoc<T>(condition.asFlow())
 
-  suspend inline fun <reified T : MongoEntityBase> listDoc(condition: Iterable<Bson?>) =
+  suspend inline fun <reified T : MongoEntity> listDoc(condition: Iterable<Bson?>) =
     listDoc<T>(condition.asFlow())
 
-  suspend inline fun <reified T : MongoEntityBase> listBson(condition: Flow<Bson?>) =
+  suspend inline fun <reified T : MongoEntity> listBson(condition: Flow<Bson?>) =
     bsonCollection<T>().list(asFilter(condition))
 
-  suspend inline fun <reified T : MongoEntityBase> listBson(vararg condition: Bson?) =
+  suspend inline fun <reified T : MongoEntity> listBson(vararg condition: Bson?) =
     listBson<T>(condition.asFlow())
 
-  suspend inline fun <reified T : MongoEntityBase> listBson(condition: Iterable<Bson?>) =
+  suspend inline fun <reified T : MongoEntity> listBson(condition: Iterable<Bson?>) =
     listBson<T>(condition.asFlow())
 
-  suspend inline fun <reified T : MongoEntityBase> singleOrNull(id: String) =
+  suspend inline fun <reified T : MongoEntity> singleOrNull(id: String) =
     entityCollection<T>().singleOrNull(id)
 
-  suspend inline fun <reified T : MongoEntityBase> single(id: String) =
+  suspend inline fun <reified T : MongoEntity> single(id: String) = entityCollection<T>().single(id)
+
+  suspend inline fun <reified T : MongoEntity> singleOrNull(id: ObjectId) =
+    entityCollection<T>().singleOrNull(id)
+
+  suspend inline fun <reified T : MongoEntity> single(id: ObjectId) =
     entityCollection<T>().single(id)
 
-  suspend inline fun <reified T : MongoEntityBase> singleOrNull(id: ObjectId) =
+  suspend inline fun <reified T : MongoEntity> singleOrNull(id: EntityDTO) =
     entityCollection<T>().singleOrNull(id)
 
-  suspend inline fun <reified T : MongoEntityBase> single(id: ObjectId) =
+  suspend inline fun <reified T : MongoEntity> single(id: EntityDTO) =
     entityCollection<T>().single(id)
 
-  suspend inline fun <reified T : MongoEntityBase> singleOrNull(id: EntityDTO) =
+  suspend inline fun <reified T : MongoEntity> singleOrNull(id: Principal) =
     entityCollection<T>().singleOrNull(id)
 
-  suspend inline fun <reified T : MongoEntityBase> single(id: EntityDTO) =
+  suspend inline fun <reified T : MongoEntity> single(id: Principal) =
     entityCollection<T>().single(id)
 
-  suspend inline fun <reified T : MongoEntityBase> singleOrNull(id: Principal) =
+  suspend inline fun <reified T : MongoEntity> singleOrNull(id: JmongoRef<*>) =
     entityCollection<T>().singleOrNull(id)
 
-  suspend inline fun <reified T : MongoEntityBase> single(id: Principal) =
-    entityCollection<T>().single(id)
-
-  suspend inline fun <reified T : MongoEntityBase> singleOrNull(id: JmongoRef<*>) =
-    entityCollection<T>().singleOrNull(id)
-
-  suspend inline fun <reified T : MongoEntityBase> single(id: JmongoRef<*>) =
+  suspend inline fun <reified T : MongoEntity> single(id: JmongoRef<*>) =
     entityCollection<T>().single(id)
 }

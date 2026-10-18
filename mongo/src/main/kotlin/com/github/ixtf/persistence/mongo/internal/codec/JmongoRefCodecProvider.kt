@@ -1,7 +1,7 @@
 package com.github.ixtf.persistence.mongo.internal.codec
 
 import com.github.ixtf.persistence.mongo.MongoEntityBase
-import com.github.ixtf.persistence.mongo.MongoRuntimeModuleConfig
+import com.github.ixtf.persistence.mongo.internal.MongoRuntimeModuleConfig
 import org.bson.BsonReader
 import org.bson.BsonType
 import org.bson.BsonWriter

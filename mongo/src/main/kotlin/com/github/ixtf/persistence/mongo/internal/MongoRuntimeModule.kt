@@ -1,7 +1,9 @@
-package com.github.ixtf.persistence.mongo
+package com.github.ixtf.persistence.mongo.internal
 
+import com.github.ixtf.persistence.mongo.Jmongo
 import com.github.ixtf.persistence.mongo.internal.codec.IOperatorCodecProvider
 import com.github.ixtf.persistence.mongo.internal.codec.JmongoRefCodecProvider
+import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.ServerApi
 import com.mongodb.ServerApiVersion
@@ -48,4 +50,13 @@ abstract class MongoRuntimeModule {
     private fun backwardCodecRegistry(config: MongoRuntimeModuleConfig): CodecRegistry =
       CodecRegistries.fromProviders(JmongoRefCodecProvider(config), IOperatorCodecProvider)
   }
+}
+
+data class MongoRuntimeModuleConfig(
+  val connectionString: ConnectionString,
+  val database: String,
+)
+
+interface MongoClientHook {
+  fun build(builder: MongoClientSettings.Builder)
 }

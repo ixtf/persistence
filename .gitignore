@@ -1,7 +1,5 @@
 .gradle
 build/
-!gradle/wrapper/gradle-wrapper.jar
-!gradle/wrapper/gradle-wrapper.properties
 !**/src/main/**/build/
 !**/src/test/**/build/
 # Ignore Gradle GUI config
@@ -76,3 +74,7 @@ hs_err_pid*
 .vertx/
 docker-command.txt
 *.config
+
+# Gradle wrapper must be tracked (negation has to come AFTER the *.jar rule above)
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties

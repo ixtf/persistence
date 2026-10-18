@@ -1,5 +1,6 @@
 package com.github.ixtf.persistence.mongo.kotlinx
 
+import cn.hutool.core.util.RandomUtil
 import cn.hutool.log.Log
 import com.github.ixtf.persistence.Sort
 import com.github.ixtf.persistence.SortStart
@@ -9,8 +10,8 @@ import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.Sorts
 import com.mongodb.kotlin.client.coroutine.FindFlow
 import com.mongodb.kotlin.client.coroutine.MongoCollection
-import java.time.Duration
-import kotlinx.coroutines.Dispatchers
+import kotlin.time.Duration.Companion.microseconds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactor.mono
 import org.bson.BsonDocument
@@ -19,20 +20,14 @@ import org.bson.BsonDocumentWriter
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.conversions.Bson
-import reactor.core.publisher.Mono
-import reactor.core.scheduler.Schedulers
-import reactor.util.retry.Retry
 
 fun MongoCollection<*>.ensureIndex(bson: Bson, options: IndexOptions) {
-  Mono.delay(Duration.ofSeconds(3))
-    .subscribeOn(Schedulers.boundedElastic())
-    .flatMap {
-      mono(Dispatchers.IO) {
-          listIndexes().firstOrNull { it.getString("name") == options.name }
-            ?: createIndex(bson, options.background(true))
-        }
-        .retryWhen(Retry.backoff(3, Duration.ofSeconds(3)))
+  mono {
+      delay(RandomUtil.randomLong(3000).microseconds)
+      listIndexes().firstOrNull { it.getString("name") == options.name }
+        ?: createIndex(bson, options.background(true))
     }
+    .retry(1)
     .doOnError { Log.get().error(it) }
     .subscribe()
 }

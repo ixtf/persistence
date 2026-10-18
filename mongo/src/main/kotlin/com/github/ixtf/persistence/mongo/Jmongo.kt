@@ -14,15 +14,13 @@ import com.github.ixtf.persistence.mongo.internal.kit.fromBson
 import com.github.ixtf.persistence.mongo.internal.kit.list
 import com.github.ixtf.persistence.mongo.internal.kit.single
 import com.github.ixtf.persistence.mongo.internal.kit.singleOrNull
-import com.google.common.collect.Maps
 import com.mongodb.client.model.Filters.*
 import com.mongodb.kotlin.client.coroutine.FindFlow
 import com.mongodb.kotlin.client.coroutine.MongoClient
-import com.mongodb.kotlin.client.coroutine.MongoCollection
+import java.io.Closeable
 import java.security.Principal
 import kotlinx.coroutines.flow.*
 import org.bson.BsonDocument
-import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 import org.bson.types.ObjectId
@@ -31,53 +29,17 @@ class Jmongo(
   val client: MongoClient,
   val codecRegistry: CodecRegistry,
   config: MongoRuntimeModuleConfig,
-) {
-  companion object {
-    const val ID_COL = "_id"
-    const val DELETED_COL = "deleted"
-    // const val DEFAULT_BATCH_SIZE = 10_000
-    private val DELETED_FALSE = eq(DELETED_COL, false)
-
-    fun idIn(o: Iterable<String>): Bson = `in`(ID_COL, o)
-
-    fun idEq(o: Any): Bson =
-      when (o) {
-        is String,
-        is ByteArray,
-        is Long,
-        is Int,
-        is Short,
-        is ObjectId -> eq(ID_COL, o)
-        is EntityDTO -> eq(ID_COL, o.id)
-        is Principal -> eq(ID_COL, o.name)
-        is IEntity -> eq(ID_COL, o.id)
-        is JmongoRef<*> -> eq(ID_COL, o.id)
-        else -> throw IllegalArgumentException("Unsupported type: $o")
-      }
-
-    fun asFilter(condition: Flow<Bson?>): Flow<Bson?> = condition.onStart { emit(DELETED_FALSE) }
-  }
-
+) : Closeable {
   val database = client.getDatabase(config.database)
-  private val metadataCache = Maps.newConcurrentMap<Class<out MongoEntity>, MongoEntityMetadata>()
+  val metadata = MongoEntityMetadata(this)
 
-  fun <T : MongoEntity> metadata(clazz: Class<T>): MongoEntityMetadata =
-    metadataCache.computeIfAbsent(clazz) {
-      MongoEntityMetadata(this, it)
-    }
+  override fun close() = client.close()
 
-  fun <T : MongoEntity> database(clazz: Class<T>) = metadata(clazz).database
+  inline fun <reified T : MongoEntity> collection() = metadata.collection(T::class.java)
 
-  fun <T : MongoEntity> collection(clazz: Class<T>) = metadata(clazz).collection
+  inline fun <reified T : MongoEntity> bsonCollection() = metadata.bsonCollection(T::class.java)
 
-  inline fun <reified T : MongoEntity> collection(): MongoCollection<Document> =
-    metadata(T::class.java).collection
-
-  inline fun <reified T : MongoEntity> bsonCollection(): MongoCollection<BsonDocument> =
-    metadata(T::class.java).bsonCollection
-
-  inline fun <reified T : MongoEntity> entityCollection(): MongoCollection<T> =
-    metadata(T::class.java).entityCollection as MongoCollection<T>
+  inline fun <reified T : MongoEntity> entityCollection() = metadata.entityCollection(T::class.java)
 
   fun asBson(o: Any): BsonDocument = codecRegistry.asBson(o)
 
@@ -89,11 +51,6 @@ class Jmongo(
 
   suspend inline fun uow(crossinline block: suspend MongoUnitOfWork.() -> Unit): Unit =
     uow().apply { block() }.commit()
-
-  inline fun <reified T : MongoEntity> asRef(id: String): JmongoRef<T> =
-    collection(T::class.java).namespace.run {
-      JmongoRef(databaseName = databaseName, collectionName = collectionName, id = id)
-    }
 
   suspend inline fun <reified T : MongoEntity> count(condition: Flow<Bson?>): Long =
     collection<T>().count(asFilter(condition))
@@ -159,4 +116,30 @@ class Jmongo(
 
   suspend inline fun <reified T : MongoEntity> single(id: JmongoRef<*>) =
     entityCollection<T>().single(id)
+
+  companion object {
+    const val ID_COL = "_id"
+    const val DELETED_COL = "deleted"
+    // const val DEFAULT_BATCH_SIZE = 10_000
+    private val DELETED_FALSE = eq(DELETED_COL, false)
+
+    fun idIn(o: Iterable<String>): Bson = `in`(ID_COL, o)
+
+    fun idEq(o: Any): Bson =
+      when (o) {
+        is String,
+        is ByteArray,
+        is Long,
+        is Int,
+        is Short,
+        is ObjectId -> eq(ID_COL, o)
+        is EntityDTO -> eq(ID_COL, o.id)
+        is Principal -> eq(ID_COL, o.name)
+        is IEntity -> eq(ID_COL, o.id)
+        is JmongoRef<*> -> eq(ID_COL, o.id)
+        else -> throw IllegalArgumentException("Unsupported type: $o")
+      }
+
+    fun asFilter(condition: Flow<Bson?>): Flow<Bson?> = condition.onStart { emit(DELETED_FALSE) }
+  }
 }

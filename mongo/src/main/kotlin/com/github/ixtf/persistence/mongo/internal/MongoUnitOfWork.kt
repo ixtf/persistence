@@ -12,8 +12,7 @@ class MongoUnitOfWork(private val jmongo: Jmongo) : AbstractUnitOfWork() {
   @Suppress("UNCHECKED_CAST")
   private fun collection(entity: IEntity): MongoCollection<Any> {
     require(entity is MongoEntity)
-    val metadata = jmongo.metadata(entity::class.java)
-    return metadata.entityCollection as MongoCollection<Any>
+    return jmongo.metadata.entityCollection(entity::class.java) as MongoCollection<Any>
   }
 
   /** 所有写操作均幂等(upsert / 条件替换 / 按 id 删除),commit 中途失败后可整体安全重试; 列表仅在全部成功后清空。非事务模式,跨实体不做原子性保证。 */

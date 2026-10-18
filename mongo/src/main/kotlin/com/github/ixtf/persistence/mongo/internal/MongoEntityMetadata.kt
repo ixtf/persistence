@@ -7,7 +7,7 @@ import org.bson.BsonDocument
 import org.bson.Document
 
 class MongoEntityMetadata(
-  private val jmongo: Jmongo,
+  jmongo: Jmongo,
   private val clazz: Class<out MongoEntity>,
 ) {
   private val anno: MongoEntityCollection?

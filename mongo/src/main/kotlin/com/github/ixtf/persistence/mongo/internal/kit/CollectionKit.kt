@@ -14,22 +14,14 @@ import kotlinx.coroutines.reactor.mono
 import org.bson.BsonDocument
 import org.bson.conversions.Bson
 
-suspend fun MongoCollection<*>.count(condition: Bson? = null): Long =
-  condition?.let { countDocuments(it) } ?: countDocuments()
-
 suspend fun MongoCollection<*>.exists(id: Any): Boolean = countDocuments(idEq(id)) > 0
 
 suspend fun <T : Any> MongoCollection<T>.singleOrNull(id: Any): T? = find(idEq(id)).singleOrNull()
 
 suspend fun <T : Any> MongoCollection<T>.single(id: Any): T = find(idEq(id)).single()
 
-fun MongoCollection<*>.asBson(o: Any): BsonDocument = codecRegistry.asBson(o)
-
-inline fun <reified T : Any> MongoCollection<*>.fromBson(bson: BsonDocument): T =
-  codecRegistry.fromBson(bson)
-
-inline fun <reified T : Any> MongoCollection<*>.fromBson(bson: String): T =
-  codecRegistry.fromBson(bson)
+suspend fun MongoCollection<*>.count(condition: Bson? = null): Long =
+  condition?.let { countDocuments(it) } ?: countDocuments()
 
 suspend fun MongoCollection<*>.count(condition: Flow<Bson?>) = count(condition.asFilter())
 
@@ -68,3 +60,11 @@ fun MongoCollection<*>.ensureIndex(bson: Bson, options: IndexOptions) {
     .doOnError { Log.get().error(it) }
     .subscribe()
 }
+
+fun MongoCollection<*>.asBson(o: Any): BsonDocument = codecRegistry.asBson(o)
+
+inline fun <reified T : Any> MongoCollection<*>.fromBson(bson: BsonDocument): T =
+  codecRegistry.fromBson(bson)
+
+inline fun <reified T : Any> MongoCollection<*>.fromBson(bson: String): T =
+  codecRegistry.fromBson(bson)

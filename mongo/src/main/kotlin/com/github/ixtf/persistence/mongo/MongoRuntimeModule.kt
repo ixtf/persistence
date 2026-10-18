@@ -31,6 +31,7 @@ abstract class MongoRuntimeModule {
       hook: Optional<MongoClientHook>,
     ): Jmongo =
       MongoClientSettings.builder().run {
+        applyConnectionString(config.connectionString)
         serverApi(ServerApi.builder().version(ServerApiVersion.V1).build())
         val registries = buildList {
           add(backwardCodecRegistry(config))

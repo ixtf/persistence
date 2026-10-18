@@ -14,8 +14,8 @@ class MongoEntityMetadata(
     get() = clazz.getAnnotation(MongoEntityCollection::class.java)
 
   val database by lazy {
-    anno?.database?.takeIf { it.isNotBlank() }?.let { jmongo.client.getDatabase(it) }
-      ?: jmongo.database
+    val databaseName = anno?.database?.takeIf { it.isNotBlank() }
+    if (databaseName != null) jmongo.client.getDatabase(databaseName) else jmongo.database
   }
   val collection by lazy {
     val collectionName = anno?.collection?.takeIf { it.isNotBlank() } ?: "T_${clazz.simpleName}"

@@ -1,4 +1,4 @@
-package com.github.ixtf.persistence.arcade
+package com.github.ixtf.persistence.arcade.internal
 
 import dagger.Module
 

@@ -1,7 +1,6 @@
 package com.github.ixtf.persistence.mongo.internal
 
 import com.github.ixtf.persistence.EntitiesDTO
-import com.github.ixtf.persistence.dto.EntityDTO
 import com.github.ixtf.persistence.mongo.Jmongo
 import com.github.ixtf.persistence.mongo.Jmongo.Companion.asFilter
 import com.github.ixtf.persistence.mongo.Jmongo.Companion.idIn
@@ -12,11 +11,9 @@ import com.github.ixtf.persistence.mongo.internal.kit.list
 import com.github.ixtf.persistence.mongo.internal.kit.single
 import com.github.ixtf.persistence.mongo.internal.kit.singleOrNull
 import java.lang.reflect.ParameterizedType
-import java.security.Principal
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import org.bson.conversions.Bson
-import org.bson.types.ObjectId
 
 abstract class CurdRepositoryJmongo<T : MongoEntity>(protected val jmongo: Jmongo) {
   @Suppress("UNCHECKED_CAST")
@@ -39,28 +36,13 @@ abstract class CurdRepositoryJmongo<T : MongoEntity>(protected val jmongo: Jmong
 
   suspend fun purge(entity: T): Unit = jmongo.uow { registerPurge(entity) }
 
-  suspend fun findOrNull(id: ObjectId): T? = entityCollection.singleOrNull(id)
+  suspend fun findOrNull(id: Any): T? = entityCollection.singleOrNull(id)
 
-  suspend fun find(id: ObjectId): T = entityCollection.single(id)
+  suspend fun find(id: Any): T = entityCollection.single(id)
 
-  suspend fun findOrNull(id: String): T? = entityCollection.singleOrNull(id)
+  fun listByIds(ids: Iterable<String>) = entityCollection.find(idIn(ids))
 
-  suspend fun find(id: String): T = entityCollection.single(id)
-
-  suspend fun findOrNull(id: EntityDTO): T? = entityCollection.singleOrNull(id)
-
-  suspend fun find(id: EntityDTO): T = entityCollection.single(id)
-
-  suspend fun findOrNull(id: Principal): T? = entityCollection.singleOrNull(id)
-
-  suspend fun find(id: Principal): T = entityCollection.single(id)
-
-  suspend fun <ID : Any> findOrCreate(id: ID, block: suspend (ID) -> T) =
-    entityCollection.singleOrNull(id) ?: block(id)
-
-  suspend fun listByIds(ids: Iterable<String>) = entityCollection.find(idIn(ids))
-
-  suspend fun listBy(ids: EntitiesDTO) = listByIds(ids.ids)
+  fun listBy(ids: EntitiesDTO) = listByIds(ids.ids)
 
   suspend fun count(condition: Flow<Bson?>) = entityCollection.count(asFilter(condition))
 

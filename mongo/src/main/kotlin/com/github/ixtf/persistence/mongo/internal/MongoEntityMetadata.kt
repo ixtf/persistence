@@ -34,6 +34,7 @@ class MongoEntityMetadata internal constructor(private val jmongo: Jmongo) {
 
   fun <T : MongoEntity> bsonCollection(clazz: Class<T>) = metadata(clazz).bsonCollection
 
+  @Suppress("UNCHECKED_CAST")
   fun <T : MongoEntity> entityCollection(clazz: Class<T>) =
     metadata(clazz).entityCollection as MongoCollection<T>
 }

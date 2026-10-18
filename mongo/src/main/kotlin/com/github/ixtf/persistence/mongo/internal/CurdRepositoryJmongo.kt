@@ -15,15 +15,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import org.bson.conversions.Bson
 
-abstract class CurdRepositoryJmongo<T : MongoEntity>(protected val jmongo: Jmongo) {
+abstract class CurdRepositoryJmongo<T : MongoEntity>(val jmongo: Jmongo) {
   @Suppress("UNCHECKED_CAST")
-  protected val entityClass by lazy {
+  val entityClass by lazy {
     val parameterizedType = javaClass.genericSuperclass as ParameterizedType
     parameterizedType.actualTypeArguments[0] as Class<T>
   }
-  protected val entityCollection by lazy { jmongo.metadata.entityCollection(entityClass) }
-  protected val collection by lazy { jmongo.metadata.collection(entityClass) }
-  protected val bsonCollection by lazy { jmongo.metadata.bsonCollection(entityClass) }
+  val entityCollection by lazy { jmongo.metadata.entityCollection(entityClass) }
+  val collection by lazy { jmongo.metadata.collection(entityClass) }
+  val bsonCollection by lazy { jmongo.metadata.bsonCollection(entityClass) }
 
   suspend fun save(entity: T) =
     if (entityCollection.exists(entity.id)) update(entity) else insert(entity)

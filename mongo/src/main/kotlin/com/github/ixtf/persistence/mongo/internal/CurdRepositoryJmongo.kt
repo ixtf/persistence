@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST", "unused")
+
 package com.github.ixtf.persistence.mongo.internal
 
 import com.github.ixtf.persistence.EntitiesDTO

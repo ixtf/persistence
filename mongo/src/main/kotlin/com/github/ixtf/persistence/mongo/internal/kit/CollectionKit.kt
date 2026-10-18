@@ -2,12 +2,9 @@ package com.github.ixtf.persistence.mongo.internal.kit
 
 import cn.hutool.core.util.RandomUtil
 import cn.hutool.log.Log
-import com.github.ixtf.persistence.Sort
-import com.github.ixtf.persistence.SortStart
 import com.github.ixtf.persistence.mongo.Jmongo.Companion.idEq
 import com.mongodb.client.model.Filters.and
 import com.mongodb.client.model.IndexOptions
-import com.mongodb.client.model.Sorts
 import com.mongodb.kotlin.client.coroutine.FindFlow
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlin.time.Duration.Companion.microseconds
@@ -16,17 +13,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactor.mono
 import org.bson.BsonDocument
 import org.bson.conversions.Bson
-
-fun MongoCollection<*>.ensureIndex(bson: Bson, options: IndexOptions) {
-  mono {
-      delay(RandomUtil.randomLong(3000).microseconds)
-      listIndexes().firstOrNull { it.getString("name") == options.name }
-        ?: createIndex(bson, options.background(true))
-    }
-    .retry(1)
-    .doOnError { Log.get().error(it) }
-    .subscribe()
-}
 
 suspend fun MongoCollection<*>.count(condition: Bson? = null): Long =
   condition?.let { countDocuments(it) } ?: countDocuments()
@@ -63,12 +49,6 @@ suspend fun <T : Any> MongoCollection<T>.list(vararg condition: Bson?) = list(co
 
 suspend fun <T : Any> MongoCollection<T>.list(condition: Iterable<Bson?>) = list(condition.asFlow())
 
-suspend fun <T : Any> FindFlow<T>.sort(sort: Flow<Sort>?): FindFlow<T> = sort(sort?.asSort())
-
-suspend fun <T : Any> FindFlow<T>.sort(vararg sort: Sort) = sort(sort.asFlow())
-
-suspend fun <T : Any> FindFlow<T>.sort(sort: Iterable<Sort>?) = sort(sort?.asFlow())
-
 suspend fun Flow<Bson?>.asFilter(): Bson? =
   filterNotNull().toList().let {
     when (it.size) {
@@ -78,15 +58,13 @@ suspend fun Flow<Bson?>.asFilter(): Bson? =
     }
   }
 
-suspend fun Flow<Sort>.asSort(): Bson? =
-  filterNotNull()
-    .distinctUntilChangedBy { it.id }
-    .toList()
-    .map { if (it.start == SortStart.asc) Sorts.ascending(it.id) else Sorts.descending(it.id) }
-    .let {
-      when (it.size) {
-        0 -> null
-        1 -> it.first()
-        else -> Sorts.orderBy(it)
-      }
+fun MongoCollection<*>.ensureIndex(bson: Bson, options: IndexOptions) {
+  mono {
+      delay(RandomUtil.randomLong(3000).microseconds)
+      listIndexes().firstOrNull { it.getString("name") == options.name }
+        ?: createIndex(bson, options.background(true))
     }
+    .retry(1)
+    .doOnError { Log.get().error(it) }
+    .subscribe()
+}

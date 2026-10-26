@@ -20,13 +20,13 @@ interface TestAppComponent {
   @Component.Factory
   interface Factory {
     fun create(
-      @BindsInstance config: ArcadeRuntimeModuleConfig = ArcadeRuntimeModuleConfig.Local("db")
+      @BindsInstance
+      config: ArcadeRuntimeModuleConfig = ArcadeRuntimeModuleConfig.Local("build/arcadedb")
     ): TestAppComponent
   }
 }
 
 @Module
 abstract class TestModule {
-  @Binds
-  abstract fun bindPersonRepository(impl: PersonRepositoryJarcade): PersonRepository
+  @Binds abstract fun bindPersonRepository(impl: PersonRepositoryJarcade): PersonRepository
 }

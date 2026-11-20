@@ -6,14 +6,6 @@ pluginManagement {
   }
 }
 
-dependencyResolutionManagement {
-  repositories {
-    mavenLocal()
-    mavenCentral()
-    maven("https://plugins.gradle.org/m2")
-  }
-}
-
 rootProject.name = "persistence"
 
 include("core")

@@ -19,7 +19,7 @@ import org.bson.codecs.configuration.CodecRegistry
 
 @Module
 abstract class MongoRuntimeModule {
-  @Multibinds abstract fun custom(): Set<CodecRegistry>
+  @Multibinds abstract fun custom(): Set<@JvmSuppressWildcards CodecRegistry>
 
   @BindsOptionalOf abstract fun hook(): MongoClientHook
 
@@ -29,7 +29,7 @@ abstract class MongoRuntimeModule {
     @Provides
     fun jmongo(
       config: MongoRuntimeModuleConfig,
-      custom: Set<CodecRegistry>,
+      custom: Set<@JvmSuppressWildcards CodecRegistry>,
       hook: Optional<MongoClientHook>,
     ): Jmongo =
       MongoClientSettings.builder().run {

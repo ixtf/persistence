@@ -10,7 +10,6 @@ dependencies {
   api("org.mongodb:mongodb-driver-kotlin-extensions")
   api("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   api("org.mongodb:bson-kotlinx")
-  api("io.github.classgraph:classgraph")
   api("com.github.ben-manes.caffeine:caffeine")
   api("com.sksamuel.aedile:aedile-core")
 }

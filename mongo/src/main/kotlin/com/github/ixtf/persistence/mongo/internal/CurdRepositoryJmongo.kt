@@ -1,4 +1,4 @@
-@file:Suppress("UNCHECKED_CAST", "unused")
+@file:Suppress("unused")
 
 package com.github.ixtf.persistence.mongo.internal
 

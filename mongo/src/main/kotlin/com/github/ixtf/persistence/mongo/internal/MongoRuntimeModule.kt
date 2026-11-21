@@ -41,7 +41,7 @@ abstract class MongoRuntimeModule {
               add(backwardCodecRegistry(config))
               addAll(custom)
               add(MongoClientSettings.getDefaultCodecRegistry())
-            }
+            },
           )
         codecRegistry(codecRegistry)
         retryWrites(true)

@@ -70,15 +70,3 @@ inline fun <reified T : Any> MongoCollection<*>.fromBson(bson: BsonDocument): T 
 
 inline fun <reified T : Any> MongoCollection<*>.fromBson(bson: String): T =
   codecRegistry.fromBson(bson)
-
-/**
- * 文档类集合名：[MongoEntityCollection] 显式钉名优先，缺省回退 `T_${simpleName}`。
- *
- * 坑：缺省名跟随类名，重构改类名会静默切集合致数据孤儿——正式文档类务必显式 collection。
- */
-fun collectionName(clazz: Class<*>): String =
-  clazz.getAnnotation(MongoEntityCollection::class.java)?.collection?.takeIf { it.isNotBlank() }
-    ?: "T_${clazz.simpleName}"
-
-fun <T : Any> Jmongo.collection(clazz: Class<T>): MongoCollection<T> =
-  database.getCollection(collectionName(clazz), clazz)

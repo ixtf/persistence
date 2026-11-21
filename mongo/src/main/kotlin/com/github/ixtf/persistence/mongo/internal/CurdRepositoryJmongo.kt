@@ -2,7 +2,7 @@
 
 package com.github.ixtf.persistence.mongo.internal
 
-import com.github.ixtf.persistence.EntitiesDTO
+import com.github.ixtf.persistence.dto.EntitiesDTO
 import com.github.ixtf.persistence.mongo.Jmongo
 import com.github.ixtf.persistence.mongo.Jmongo.Companion.asFilter
 import com.github.ixtf.persistence.mongo.Jmongo.Companion.idIn

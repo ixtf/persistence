@@ -1,3 +1,5 @@
 package com.github.ixtf.persistence
 
-@JvmRecord data class Sort(val id: String, val start: SortStart)
+import java.io.Serializable
+
+@JvmRecord data class Sort(val id: String, val start: SortStart) : Serializable

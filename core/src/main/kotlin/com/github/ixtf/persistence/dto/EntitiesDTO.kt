@@ -1,4 +1,4 @@
-package com.github.ixtf.persistence
+package com.github.ixtf.persistence.dto
 
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank

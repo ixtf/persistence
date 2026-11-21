@@ -21,7 +21,7 @@ interface TestAppComponent {
   interface Factory {
     fun create(
       @BindsInstance
-      config: ArcadeRuntimeModuleConfig = ArcadeRuntimeModuleConfig.Local("build/arcadedb")
+      config: ArcadeRuntimeModuleConfig = ArcadeRuntimeModuleConfig.Local("build/arcadedb"),
     ): TestAppComponent
   }
 }

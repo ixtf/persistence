@@ -2,9 +2,7 @@ package com.github.ixtf.persistence.mongo.internal.kit
 
 import cn.hutool.core.util.RandomUtil
 import cn.hutool.log.Log
-import com.github.ixtf.persistence.mongo.Jmongo
 import com.github.ixtf.persistence.mongo.Jmongo.Companion.idEq
-import com.github.ixtf.persistence.mongo.MongoEntityCollection
 import com.mongodb.client.model.Filters.and
 import com.mongodb.client.model.IndexOptions
 import com.mongodb.kotlin.client.coroutine.FindFlow

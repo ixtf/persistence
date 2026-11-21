@@ -21,15 +21,14 @@ import java.io.Closeable
 import java.security.Principal
 import kotlinx.coroutines.flow.*
 import org.bson.BsonDocument
-import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
 class Jmongo(
   val client: MongoClient,
-  val codecRegistry: CodecRegistry,
   config: MongoRuntimeModuleConfig,
 ) : Closeable {
   val database = client.getDatabase(config.database)
+  val codecRegistry = database.codecRegistry
   val metadata = MongoEntityMetadata(this)
 
   override fun close() = client.close()

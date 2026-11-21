@@ -12,8 +12,8 @@ import org.bson.codecs.pojo.annotations.BsonId
 annotation class MongoEntityCollection(val database: String = "", val collection: String = "")
 
 abstract class MongoEntity : IEntity {
-  @BsonId override lateinit var id: String
-  override var deleted = false
+  @get:BsonId abstract override val id: String
+  abstract override val deleted: Boolean
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
